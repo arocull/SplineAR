@@ -11,15 +11,15 @@
 
 #include "src/config.h"
 
-#include "src/Program/gpu.h"
 #include "src/Program/window.h"
+#include "src/Program/gpu.h"
 
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
 int main(int argc, char **argv) {
-    // Initialize openGL and Window
+    // Initialize openGL and PWindow
     if (!glfwInit()) return -1;
 
-    Window window = Window(WindowWidth, WindowHeight, "OpenCL GL Testing");
+    PWindow window = PWindow(WindowWidth, WindowHeight, "OpenCL GL Testing");
     if (!window.glWindow) {
         const char** errorMsg;
         int errorCode = glfwGetError(errorMsg);
@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei) WindowWidth, (GLsizei) WindowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glFinish();
 
     // Pipe into OpenCL
     cl_int errorReturn = 0;
@@ -84,7 +85,6 @@ int main(int argc, char **argv) {
     printf("Attempted to bind GL texture to CL with error code %i\n", errorcode);
     clSetKernelArg(kernel, 0, sizeof(canvasTextureCL), &canvasTextureCL);
 
-    glFinish();
     errorcode = clEnqueueAcquireGLObjects(gpu.queue, 1, &canvasTextureCL, 0, 0, NULL);
     printf("Attempted to take control of GL object to CL with error code %i\n", errorcode);
 

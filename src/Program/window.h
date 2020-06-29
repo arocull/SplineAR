@@ -2,9 +2,9 @@
 
 #include <GLFW/glfw3.h>
 
-class Window {
+class PWindow {
     public:
-        Window(int windowWidth, int windowHeight, const char* windowName);
+        PWindow(int windowWidth, int windowHeight, const char* windowName);
         void Close();
 
         GLFWwindow* glWindow;

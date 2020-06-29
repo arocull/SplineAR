@@ -19,6 +19,11 @@ A [tutorial by Intel](https://software.intel.com/content/www/us/en/develop/artic
 
 And finally, a list of OpenCL [Error Codes](https://streamhpc.com/blog/2013-04-28/opencl-error-codes/)
 
+### Using GLFW
+https://stackoverflow.com/questions/28955023/how-can-i-create-an-shared-context-between-opengl-and-opencl-with-glfw3-on-osx
+
+https://github.com/glfw/glfw/issues/104
+
 
 # Utilities for Later
 [Multithreading](https://stackoverflow.com/questions/21663555/run-two-functions-at-the-same-time)
