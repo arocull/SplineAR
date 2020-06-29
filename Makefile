@@ -5,7 +5,7 @@ CCFLAGS=-g -O2 `pkg-config --cflags --libs glfw3 gl glu glew OpenCL`
 LDFLAGS=-g -O2 `pkg-config --cflags --libs glfw3 gl glu glew OpenCL`
 TARGET=main
 
-MODULES   := src src/render src/window
+MODULES   := src src/Render src/Program
 SRC_DIR   := $(addprefix ./,$(MODULES)) .
 BUILD_DIR := $(addprefix build/,$(MODULES))
 

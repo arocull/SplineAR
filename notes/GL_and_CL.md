@@ -9,3 +9,8 @@ My own [OpenCL Demo / Test](https://gist.github.com/Masteralan/5095f99b3afc7087d
 Official [OpenCL Demos](https://developer.nvidia.com/opencl)
 
 [Multithreading](https://stackoverflow.com/questions/21663555/run-two-functions-at-the-same-time)
+
+
+## Texture editing in OpenCL Kernel
+https://gist.github.com/Twinklebear/5393665
+http://www.cmsoft.com.br/opencl-tutorial/openclopengl-interoperation-textures/
