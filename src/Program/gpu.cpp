@@ -69,3 +69,32 @@ void GPU::Close() {
     clReleaseContext(context);
     clReleaseDevice(deviceID);
 }
+
+
+
+void GPU::BuildShaderFromFile(cl_program *program, cl_kernel *kernel, const char* path) {
+    FILE* fp = fopen(path, "rb");
+    if (!fp) { printf("Failed to load kernel source file from path %s\n", path); return; }
+    fseek(fp, 0, SEEK_END);
+    long program_size = ftell(fp);
+    rewind(fp);
+    char* source_str = (char*) malloc(program_size + 1);
+    source_str[program_size] = '\0';
+    fread(source_str, sizeof(char), program_size, fp);
+    fclose(fp);
+    #ifdef DEBUG_VERBOSE
+        printf("\nLoaded shader -\n%s\n\n", source_str);
+    #endif
+
+    return BuildShader(program, kernel, source_str);
+    free(source_str);
+}
+void GPU::BuildShader(cl_program *program, cl_kernel *kernel, const char* source) {
+    cl_int errorcode;
+    *program = clCreateProgramWithSource(context, 1, (const char**)&source, NULL, &errorcode);
+    if (errorcode != 0) { perror("Failed to create shader program\n"); printf("\tSource:\n%s\n\n", source); }
+    errorcode = clBuildProgram(*program, 1, &deviceID, NULL, NULL, NULL);
+    if (errorcode != 0) { perror("Failed to copile shader from source:\n"); printf("%s\n\n", source); }
+    *kernel = clCreateKernel(*program, "test", &errorcode);
+    if (errorcode != 0) { perror("Failed to add shader to kernel\n"); printf("\tSource:\n%s\n\n", source); }
+}

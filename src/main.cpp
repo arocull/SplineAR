@@ -41,32 +41,14 @@ int main(int argc, char **argv) {
         printf("OpenGL version %i.%i\n", versionMajor, versionMinor);
     #endif
 
+
+    // Initialize OpenCL
     GPU gpu = GPU();
 
-    // Load in OpenCL Kernels from https://stackoverflow.com/questions/29121443/read-opencl-kernel-from-seperate-file
-    FILE* fp = fopen("src/Render/cl_kernels/test.cl", "rb");
-    if (!fp) {
-        printf("Failed to load kernel source file!\n");
-        return -1;
-    }
-    fseek(fp, 0, SEEK_END);
-    long program_size = ftell(fp);
-    rewind(fp);
-    char* source_str = (char*) malloc(program_size + 1);
-    source_str[program_size] = '\0';
-    fread(source_str, sizeof(char), program_size, fp);
-    fclose(fp);
-    #ifdef DEBUG_VERBOSE
-        printf("\nLoaded shader -\n%s\n\n", source_str);
-    #endif
-
-    cl_int errorcode;
-    cl_program program = clCreateProgramWithSource(gpu.context, 1, (const char**)&source_str, NULL, &errorcode);
-    errorcode = clBuildProgram(program, 1, &gpu.deviceID, NULL, NULL, NULL);
-    printf("Compiled shader with error code %i\n", errorcode);
-    cl_kernel kernel = clCreateKernel(program, "test", &errorcode);
-    printf("Compiled shader and added it to kernel with error code %i\n", errorcode);
-
+    // Build OpenCL Kernels
+    cl_program program;
+    cl_kernel kernel;
+    gpu.BuildShaderFromFile(&program, &kernel, "src/Render/cl_kernels/test.cl");
 
     // Create OpenGL Texture
     GLuint canvasTexture;
@@ -80,8 +62,8 @@ int main(int argc, char **argv) {
     glFinish();
 
     // Pipe into OpenCL
-    cl_int errorReturn = 0;
-    cl_mem canvasTextureCL = clCreateFromGLTexture(gpu.context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, canvasTexture, &errorReturn);
+    cl_int errorcode;
+    cl_mem canvasTextureCL = clCreateFromGLTexture(gpu.context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, canvasTexture, &errorcode);
     printf("Attempted to bind GL texture to CL with error code %i\n", errorcode);
     clSetKernelArg(kernel, 0, sizeof(canvasTextureCL), &canvasTextureCL);
 
