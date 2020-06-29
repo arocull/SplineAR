@@ -32,10 +32,7 @@ int main(int argc, char **argv) {
     // Initialize GLEW and set up rendering context
     glfwMakeContextCurrent(window.glWindow);
 
-    if (glewInit() != GLEW_OK) {
-        perror("GLEW NOT OKAY, ABORT ABORT\n");
-        return -1;
-    }
+    if (glewInit() != GLEW_OK) { perror("GLEW NOT OKAY, ABORT ABORT\n"); return -1; }
 
     int versionMajor, versionMinor;
     glGetIntegerv(GL_MAJOR_VERSION, &versionMajor);
@@ -48,7 +45,7 @@ int main(int argc, char **argv) {
     // Load in OpenCL Kernels from https://stackoverflow.com/questions/29121443/read-opencl-kernel-from-seperate-file
     FILE* fp = fopen("src/Render/cl_kernels/test.cl", "rb");
     if (!fp) {
-        printf("Failed to load kernel!\n");
+        printf("Failed to load kernel source file!\n");
         return -1;
     }
     fseek(fp, 0, SEEK_END);
@@ -59,10 +56,12 @@ int main(int argc, char **argv) {
     fread(source_str, sizeof(char), program_size, fp);
     fclose(fp);
 
-    cl_program program = clCreateProgramWithSource(gpu.context, 1, (const char**)&source_str, NULL, NULL);
-    clBuildProgram(program, 1, &gpu.deviceID, NULL, NULL, NULL);
-    cl_kernel kernel = clCreateKernel(program, "test", NULL);
-    printf("Compiled shader and added it to kernel\n");
+    cl_int errorcode;
+    cl_program program = clCreateProgramWithSource(gpu.context, 1, (const char**)&source_str, NULL, &errorcode);
+    errorcode = clBuildProgram(program, 1, &gpu.deviceID, NULL, NULL, NULL);
+    printf("Compiled shader with error code %i\n", errorcode);
+    cl_kernel kernel = clCreateKernel(program, "test", &errorcode);
+    printf("Compiled shader and added it to kernel with error code %i\n", errorcode);
 
 
     // Create OpenGL Texture
@@ -78,10 +77,12 @@ int main(int argc, char **argv) {
     // Pipe into OpenCL
     cl_int errorReturn = 0;
     cl_mem canvasTextureCL = clCreateFromGLTexture2D(gpu.context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, canvasTexture, &errorReturn);
+    printf("Attempted to bind GL texture to CL with error code %i\n", errorcode);
     clSetKernelArg(kernel, 0, sizeof(canvasTextureCL), &canvasTextureCL);
 
     glFinish();
-    clEnqueueAcquireGLObjects(gpu.queue, 1, &canvasTextureCL, 0, 0, NULL);
+    errorcode = clEnqueueAcquireGLObjects(gpu.queue, 1, &canvasTextureCL, 0, 0, NULL);
+    printf("Attempted to take control of GL object to CL with error code %i\n", errorcode);
 
     // run kernel
     const size_t width = WindowWidth;

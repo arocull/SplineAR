@@ -12,5 +12,7 @@ Official [OpenCL Demos](https://developer.nvidia.com/opencl)
 
 
 ## Texture editing in OpenCL Kernel
+List of OpenCL [Error Codes](https://streamhpc.com/blog/2013-04-28/opencl-error-codes/)
+
 https://gist.github.com/Twinklebear/5393665
 http://www.cmsoft.com.br/opencl-tutorial/openclopengl-interoperation-textures/

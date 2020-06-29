@@ -5,6 +5,8 @@
 
 #include <cstdio>
 
+#include "src/config.h"
+
 class GPU {
   public:
     GPU();

@@ -1,7 +1,7 @@
 #include "src/Program/gpu.h"
 
 GPU::GPU() {
-    int platform;
+    /* int platform;
     int hRC;
     int hDC;
 
@@ -12,19 +12,36 @@ GPU::GPU() {
         0
     };
 
-    printf("Supported platforms %i, GL/CL %i, WGL HDC %i\n", platform, hRC, hDC);
+    printf("Supported platforms %i, GL/CL %i, WGL HDC %i\n", platform, hRC, hDC); */
 
     cl_uint numPlatforms;
     cl_uint numDevices;
 
     cl_int returnValue = clGetPlatformIDs(1, &platformID, &numPlatforms);
+    #ifdef DEBUG_VERBOSE
+        printf("Searched for valid CL Platform with error code %i\n", returnValue);
+    #endif
     returnValue = clGetDeviceIDs(platformID, CL_DEVICE_TYPE_GPU, 1, &deviceID, &numDevices);
-    printf("Platform and device info gathered\n\tNumber of platforms %i; Number of devices %i\n", numPlatforms, numDevices);
+    printf("Platform and device info gathered with error code %i\n\tNumber of platforms %i; Number of devices %i\n", returnValue, numPlatforms, numDevices);
+
+    #ifdef DEBUG_VERBOSE
+        size_t extensionListSize;
+        clGetDeviceInfo(deviceID, CL_DEVICE_EXTENSIONS, 0, NULL, &extensionListSize);
+        char extensions[extensionListSize];
+        clGetDeviceInfo(deviceID, CL_DEVICE_EXTENSIONS, extensionListSize, extensions, &extensionListSize);
+        printf("Support GL extensions include:\n\t%s\n", extensions);
+        // Note: cl_khr_gl_sharing should be included in this list if this program is to work
+    #endif
 
     // Create Context
     context = clCreateContext(NULL, 1, &deviceID, NULL, NULL, &returnValue);
+    #ifdef DEBUG_VERBOSE
+        printf("Created an OpenCL context with error code %i\n", returnValue);
+    #endif
     queue = clCreateCommandQueueWithProperties(context, deviceID, NULL, &returnValue);
-    printf("Created an OpenCL context and queue\n");
+    #ifdef DEBUG_VERBOSE
+        printf("Created an OpenCL queue with error code %i\n", returnValue);
+    #endif
 }
 
 void GPU::Close() {
