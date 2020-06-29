@@ -1,18 +1,7 @@
 #include "src/Program/gpu.h"
 
 GPU::GPU() {
-    /* int platform;
-    int hRC;
-    int hDC;
-
-    cl_context_properties props[] = {
-        CL_CONTEXT_PLATFORM, (cl_context_properties) platform,
-        CL_GL_CONTEXT_KHR, (cl_context_properties) hRC,
-        CL_WGL_HDC_KHR, (cl_context_properties) hDC,
-        0
-    };
-
-    printf("Supported platforms %i, GL/CL %i, WGL HDC %i\n", platform, hRC, hDC); */
+    // printf("Supported platforms %i, GL/CL %i, WGL HDC %i\n", platform, hRC, hDC);
 
     cl_uint numPlatforms;
     cl_uint numDevices;
@@ -29,9 +18,20 @@ GPU::GPU() {
         clGetDeviceInfo(deviceID, CL_DEVICE_EXTENSIONS, 0, NULL, &extensionListSize);
         char extensions[extensionListSize];
         clGetDeviceInfo(deviceID, CL_DEVICE_EXTENSIONS, extensionListSize, extensions, &extensionListSize);
-        printf("Support GL extensions include:\n\t%s\n", extensions);
+        printf("\nSupported GL extensions include:\n\t%s\n\n", extensions);
         // Note: cl_khr_gl_sharing should be included in this list if this program is to work
     #endif
+
+
+    cl_context_properties hRC;
+    clGetGLContextInfoKHR(&hRC, CL_DEVICES_FOR_GL_CONTEXT_KHR, 1, NULL, NULL);
+    
+    cl_context_properties props[] = {
+        // CL_CONTEXT_PLATFORM, (cl_context_properties) platformID,
+        CL_GL_CONTEXT_KHR, (cl_context_properties) hRC,
+        // CL_WGL_HDC_KHR, (cl_context_properties) ,
+        0
+    };
 
     // Create Context
     context = clCreateContext(NULL, 1, &deviceID, NULL, NULL, &returnValue);

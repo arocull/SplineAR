@@ -34,13 +34,14 @@ int main(int argc, char **argv) {
 
     if (glewInit() != GLEW_OK) { perror("GLEW NOT OKAY, ABORT ABORT\n"); return -1; }
 
-    int versionMajor, versionMinor;
-    glGetIntegerv(GL_MAJOR_VERSION, &versionMajor);
-    glGetIntegerv(GL_MINOR_VERSION, &versionMinor);
-    printf("OpenGL version %i.%i\n", versionMajor, versionMinor);
+    #ifdef DEBUG_VERBOSE
+        int versionMajor, versionMinor;
+        glGetIntegerv(GL_MAJOR_VERSION, &versionMajor);
+        glGetIntegerv(GL_MINOR_VERSION, &versionMinor);
+        printf("OpenGL version %i.%i\n", versionMajor, versionMinor);
+    #endif
 
     GPU gpu = GPU();
-
 
     // Load in OpenCL Kernels from https://stackoverflow.com/questions/29121443/read-opencl-kernel-from-seperate-file
     FILE* fp = fopen("src/Render/cl_kernels/test.cl", "rb");
@@ -55,6 +56,9 @@ int main(int argc, char **argv) {
     source_str[program_size] = '\0';
     fread(source_str, sizeof(char), program_size, fp);
     fclose(fp);
+    #ifdef DEBUG_VERBOSE
+        printf("\nLoaded shader -\n%s\n\n", source_str);
+    #endif
 
     cl_int errorcode;
     cl_program program = clCreateProgramWithSource(gpu.context, 1, (const char**)&source_str, NULL, &errorcode);
@@ -76,7 +80,7 @@ int main(int argc, char **argv) {
 
     // Pipe into OpenCL
     cl_int errorReturn = 0;
-    cl_mem canvasTextureCL = clCreateFromGLTexture2D(gpu.context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, canvasTexture, &errorReturn);
+    cl_mem canvasTextureCL = clCreateFromGLTexture(gpu.context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, canvasTexture, &errorReturn);
     printf("Attempted to bind GL texture to CL with error code %i\n", errorcode);
     clSetKernelArg(kernel, 0, sizeof(canvasTextureCL), &canvasTextureCL);
 
