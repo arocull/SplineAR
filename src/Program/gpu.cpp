@@ -83,7 +83,7 @@ void GPU::BuildShaderFromFile(cl_program *program, cl_kernel *kernel, const char
     fread(source_str, sizeof(char), program_size, fp);
     fclose(fp);
     #ifdef DEBUG_VERBOSE
-        printf("\nLoaded shader -\n%s\n\n", source_str);
+        printf("\nLoaded shader source from file %s\n", path);
     #endif
 
     return BuildShader(program, kernel, source_str);
@@ -96,5 +96,5 @@ void GPU::BuildShader(cl_program *program, cl_kernel *kernel, const char* source
     errorcode = clBuildProgram(*program, 1, &deviceID, NULL, NULL, NULL);
     if (errorcode != 0) { perror("Failed to copile shader from source:\n"); printf("%s\n\n", source); }
     *kernel = clCreateKernel(*program, "test", &errorcode);
-    if (errorcode != 0) { perror("Failed to add shader to kernel\n"); printf("\tSource:\n%s\n\n", source); }
+    if (errorcode != 0) { perror("Failed to add shader to kernel\n"); }
 }

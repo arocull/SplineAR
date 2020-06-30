@@ -13,6 +13,7 @@
 
 #include "src/Program/window.h"
 #include "src/Program/gpu.h"
+#include "src/Render/pipeline.h"
 
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
 int main(int argc, char **argv) {
@@ -44,49 +45,33 @@ int main(int argc, char **argv) {
 
     // Initialize OpenCL
     GPU gpu = GPU();
+    Pipeline pipeline = Pipeline(&gpu, window.glWindow);
 
-    // Build OpenCL Kernels
-    cl_program program;
-    cl_kernel kernel;
-    gpu.BuildShaderFromFile(&program, &kernel, "src/Render/cl_kernels/test.cl");
+    pipeline.SetupContext();
 
-    // Create OpenGL Texture
-    GLuint canvasTexture;
-    glGenTextures(1, &canvasTexture);
-    glBindTexture(GL_TEXTURE_2D, canvasTexture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei) WindowWidth, (GLsizei) WindowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    glFinish();
+    
+    // Set up clock for delta time fetching
+    timespec lastTime;
+    timespec currentTime;
+    if (clock_gettime(CLOCK_MONOTONIC, &lastTime) != 0) {
+        perror("Error on fetching initial time!");
+        return -1;
+    }
 
-    // Pipe into OpenCL
-    cl_int errorcode;
-    cl_mem canvasTextureCL = clCreateFromGLTexture(gpu.context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, canvasTexture, &errorcode);
-    printf("Attempted to bind GL texture to CL with error code %i\n", errorcode);
-    clSetKernelArg(kernel, 0, sizeof(canvasTextureCL), &canvasTextureCL);
+    printf("Passed initialization.\n");
+    // Run until window closes
+    while(!glfwWindowShouldClose(window.glWindow)) {
+        glfwPollEvents();
+        clock_gettime(CLOCK_MONOTONIC, &currentTime);
+        float DeltaTime = ((currentTime.tv_sec - lastTime.tv_sec) * 1e9 + (currentTime.tv_nsec - lastTime.tv_nsec)) * 1e-9;
+        lastTime = currentTime;
 
-    errorcode = clEnqueueAcquireGLObjects(gpu.queue, 1, &canvasTextureCL, 0, 0, NULL);
-    printf("Attempted to take control of GL object to CL with error code %i\n", errorcode);
-
-    // run kernel
-    const size_t width = WindowWidth;
-    const size_t height = WindowHeight;
-    clEnqueueNDRangeKernel(gpu.queue, kernel, 2, NULL, &width, &height, 0, NULL, NULL);
-
-    // Finish
-    clFinish(gpu.queue);
-    clEnqueueReleaseGLObjects(gpu.queue, 1, &canvasTextureCL, 0, 0, NULL);
-
-    // Free Texture
-    clReleaseMemObject(canvasTextureCL);
-    glDeleteTextures(1, &canvasTexture);
+        pipeline.RunPipeline(DeltaTime);
+    }
 
 
     // Free OpenCL
-    clReleaseKernel(kernel);
-    clReleaseProgram(program);
+    pipeline.Close();
     gpu.Close();
 
     window.Close();
