@@ -26,7 +26,7 @@ all: checkdirs build/$(TARGET)
 
 # Build C++ objects
 build/$(TARGET): $(OBJ)
-	@echo "Compiling $(SRC)"
+	# @echo "Compiling $(SRC)"
 	$(LD) $^ $(LDFLAGS) -o $@
 
 checkdirs: $(BUILD_DIR)

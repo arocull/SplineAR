@@ -117,7 +117,7 @@ void Pipeline::MidFrame(int width, int height) {
     clEnqueueWriteBuffer(gpu->queue, clTime, CL_TRUE, 0, sizeof(float), &time, 0, NULL, NULL); // Updates CL time to be same as shader
 
     // Run shaders
-    size_t work_size[] = {width, height};
+    size_t work_size[] = {(size_t) width, (size_t) height};
     for (int i = 0; i < NumPrimaryShaders; i++) {
         clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
     }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "src/config.h"
+
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
 
@@ -7,8 +9,6 @@
 #include <GLFW/glfw3.h>
 
 #include <cstdio>
-
-#include "src/config.h"
 
 class GPU {
   public:

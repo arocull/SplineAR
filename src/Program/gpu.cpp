@@ -80,7 +80,7 @@ void GPU::BuildShaderFromFile(cl_program *program, cl_kernel *kernel, const char
     rewind(fp);
     char* source_str = (char*) malloc(program_size + 1);
     source_str[program_size] = '\0';
-    fread(source_str, sizeof(char), program_size, fp);
+    size_t readSize = fread(source_str, sizeof(char), program_size, fp);
     fclose(fp);
     #ifdef DEBUG_VERBOSE
         printf("\nLoaded shader source from file %s\n", path);

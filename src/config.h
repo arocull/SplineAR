@@ -2,6 +2,8 @@
 
 
 /* Compiler Flags */
+#define CL_TARGET_OPENCL_VERSION 220
+
 #define PLATFORM_LINUX
 // #define PLATFORM_WINDOWS
 // #define PLATFORM_MACOS

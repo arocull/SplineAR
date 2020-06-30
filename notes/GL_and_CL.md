@@ -17,13 +17,13 @@ A basic [tutorial](http://www.cmsoft.com.br/opencl-tutorial/openclopengl-interop
 
 A [tutorial by Intel](https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html) giving more in-depth understandings of what is going on, with another one on [surface sharing](https://software.intel.com/content/www/us/en/develop/articles/sharing-surfaces-between-opencl-and-opengl-43-on-intel-processor-graphics-using-implicit.html)
 
+
+Different operating systems requires different methods for fetching the OpenGL context when configuring OpenCL. Here is a [list](https://github.com/glfw/glfw/issues/104) of them.
+
 And finally, a list of OpenCL [Error Codes](https://streamhpc.com/blog/2013-04-28/opencl-error-codes/)
-
-### Using GLFW
-https://stackoverflow.com/questions/28955023/how-can-i-create-an-shared-context-between-opengl-and-opencl-with-glfw3-on-osx
-
-https://github.com/glfw/glfw/issues/104
 
 
 # Utilities for Later
 [Multithreading](https://stackoverflow.com/questions/21663555/run-two-functions-at-the-same-time)
+
+Passing [structs to kernels](https://stackoverflow.com/questions/52009087/passing-c-structures-to-opencl-kernel) in OpenCL

@@ -1,10 +1,11 @@
 #pragma once
 
+#include "src/config.h"
+
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
 
-#include "src/config.h"
 #include "src/Program/gpu.h"
 
 class Pipeline {

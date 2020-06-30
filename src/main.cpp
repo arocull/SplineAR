@@ -1,3 +1,8 @@
+// Written by Alan O'Cull
+// Contributions are welcome
+
+#include "src/config.h"
+
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
 #include <GL/glew.h>
@@ -8,8 +13,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <time.h>
-
-#include "src/config.h"
 
 #include "src/Program/window.h"
 #include "src/Program/gpu.h"
