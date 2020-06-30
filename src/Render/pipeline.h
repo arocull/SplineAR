@@ -17,6 +17,7 @@ class Pipeline {
 
         GLuint canvasGL;
         cl_mem canvasCL;
+        cl_sampler uvSampler;
 
         cl_program* shaderPrograms;
         cl_kernel* shaderKernels;
@@ -37,7 +38,7 @@ class Pipeline {
         // Start pipeline -- runs initial setup, buffer clears, applies camera transforms, etc
         void StartFrame();
         // Run GL and CL pipelines
-        void MidFrame(size_t width, size_t height);
+        void MidFrame(int width, int height);
         // Swaps buffers and pops out of matrix transforms
         void EndFrame();
 };

@@ -11,17 +11,37 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
 
     // Generate Canvas Texture and Pipe into OpenCL
     glGenTextures(1, &canvasGL);
+    glBindTexture(GL_TEXTURE_2D, canvasGL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, (GLsizei) WindowWidth, (GLsizei) WindowHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, WindowWidth, WindowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+    glBindTexture(GL_TEXTURE_2D, 0);
     glFinish();
 
     canvasCL = clCreateFromGLTexture(gpu->context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, canvasGL, NULL);
 
+    #ifdef DEBUG_VERBOSE
+        printf("Created and linked canvas texture for OpenGL and OpenCL\n");
+    #endif
+
+    // Generate texture sampler
+    cl_sampler_properties uvSamplerProperties[] = {
+        CL_SAMPLER_NORMALIZED_COORDS, (cl_sampler_properties) true,
+        CL_SAMPLER_ADDRESSING_MODE, (cl_sampler_properties) CL_ADDRESS_CLAMP_TO_EDGE,
+        CL_SAMPLER_FILTER_MODE, (cl_sampler_properties) CL_FILTER_NEAREST,
+        0
+    };
+    uvSampler = clCreateSamplerWithProperties(gpu->context, uvSamplerProperties, NULL);
+
+    #ifdef DEBUG_VERBOSE
+        printf("Created OpenCL sampler for shader kernels\n");
+    #endif
+
     // Set Kernel Arguements
     clSetKernelArg(shaderKernels[0], 0, sizeof(canvasCL), &canvasCL);
+    // clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
 }
 
 void Pipeline::SetupContext() {
@@ -39,6 +59,7 @@ void Pipeline::Close() {
         printf("Graphics pipeline finished. Closing pipeline...\n");
     }
 
+    clReleaseSampler(uvSampler);
     clReleaseMemObject(canvasCL);
     glDeleteTextures(1, &canvasGL);
 
@@ -57,7 +78,7 @@ void Pipeline::RunPipeline(float DeltaTime) {
     glfwGetWindowSize(window, &width, &height);
 
     StartFrame();
-    MidFrame((size_t) width, (size_t) height);
+    MidFrame(WindowWidth, WindowHeight);
     EndFrame();
 
     pipelineRunning = false;
@@ -71,19 +92,20 @@ void Pipeline::StartFrame() {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-1, 1, -1, 1, 0, 1000);
+    glOrtho(0, 1, 0, 1, 0, 1000);
     // gluPerspective(70, width / height, 1.0f, 100);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
     glFinish();
 }
-void Pipeline::MidFrame(size_t width, size_t height) {
+void Pipeline::MidFrame(int width, int height) {
     // Fetch OpenGL objects
     clEnqueueAcquireGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
 
     // Run shaders
-    clEnqueueNDRangeKernel(gpu->queue, shaderKernels[0], 2, NULL, &width, &height, 0, NULL, NULL);
+    size_t work_size[] = {width, height};
+    clEnqueueNDRangeKernel(gpu->queue, shaderKernels[0], 2, NULL, work_size, 0, 0, NULL, NULL);
 
     // Release hold of OpenGL objects
     clEnqueueReleaseGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
@@ -92,6 +114,7 @@ void Pipeline::MidFrame(size_t width, size_t height) {
     clFinish(gpu->queue);
 
     // Draw updated Canvas texture
+    glColor4f(1,1,1,1);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, canvasGL); // Bind OpenGL rendering texture to the GL canvas
     glBegin(GL_QUADS);
@@ -102,6 +125,7 @@ void Pipeline::MidFrame(size_t width, size_t height) {
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0); // Texture is unset
+    glFinish();
 
     // Do not need to finish or flush GL due to buffer swap
 }
