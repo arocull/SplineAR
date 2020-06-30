@@ -18,12 +18,15 @@ class Pipeline {
         GLuint canvasGL;
         cl_mem canvasCL;
         cl_sampler uvSampler;
+        cl_mem clTime;
 
         cl_program* shaderPrograms;
         cl_kernel* shaderKernels;
 
         bool pipelineRunning = false;
         bool canRunPipeline = true;
+
+        float time = 0.0f;
 
     public:
         // Performs basic setup for GLFW window

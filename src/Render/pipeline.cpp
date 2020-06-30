@@ -7,7 +7,7 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
     // Compile Initial Shaders
     shaderPrograms = (cl_program*) calloc(NumPrimaryShaders, sizeof(cl_program));
     shaderKernels = (cl_kernel*) calloc(NumPrimaryShaders, sizeof(cl_kernel));
-    gpu->BuildShaderFromFile(&(shaderPrograms[0]), &(shaderKernels[0]), "src/Render/cl_kernels/test.cl");
+    gpu->BuildShaderFromFile(&(shaderPrograms[0]), &(shaderKernels[0]), "src/Render/cl_kernels/time_test.cl", "time_test");
 
     // Generate Canvas Texture and Pipe into OpenCL
     glGenTextures(1, &canvasGL);
@@ -39,13 +39,18 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
         printf("Created OpenCL sampler for shader kernels\n");
     #endif
 
+
+    // Allocate other CL Memory types
+    clTime = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(float), NULL, NULL); // Time tracker for OpenCL shaders
+
     // Set Kernel Arguements
-    clSetKernelArg(shaderKernels[0], 0, sizeof(canvasCL), &canvasCL);
-    // clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
+    clSetKernelArg(shaderKernels[0], 0, sizeof(canvasCL), &canvasCL); // Set image to the first arguement of the given Kernel
+    clSetKernelArg(shaderKernels[0], 1, sizeof(clTime), &clTime);     // Set the time to the second arguement of the given Kernel
+    //clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
 }
 
 void Pipeline::SetupContext() {
-    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST | GL_BLEND_COLOR);
     glDepthFunc(GL_FRONT);
 }
 
@@ -60,6 +65,8 @@ void Pipeline::Close() {
     }
 
     clReleaseSampler(uvSampler);
+    clReleaseMemObject(clTime);
+
     clReleaseMemObject(canvasCL);
     glDeleteTextures(1, &canvasGL);
 
@@ -77,6 +84,8 @@ void Pipeline::RunPipeline(float DeltaTime) {
     int width, height;
     glfwGetWindowSize(window, &width, &height);
 
+    time += DeltaTime;
+
     StartFrame();
     MidFrame(WindowWidth, WindowHeight);
     EndFrame();
@@ -86,7 +95,7 @@ void Pipeline::RunPipeline(float DeltaTime) {
 
 
 void Pipeline::StartFrame() {
-    glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glClearDepth(1.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
@@ -97,15 +106,22 @@ void Pipeline::StartFrame() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glFinish();
+    glFinish(); // Finish OpenGL queue before moving to OpenCL
 }
 void Pipeline::MidFrame(int width, int height) {
     // Fetch OpenGL objects
     clEnqueueAcquireGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
 
+
+    // Update memory
+    clEnqueueWriteBuffer(gpu->queue, clTime, CL_TRUE, 0, sizeof(float), &time, 0, NULL, NULL); // Updates CL time to be same as shader
+
     // Run shaders
     size_t work_size[] = {width, height};
-    clEnqueueNDRangeKernel(gpu->queue, shaderKernels[0], 2, NULL, work_size, 0, 0, NULL, NULL);
+    for (int i = 0; i < NumPrimaryShaders; i++) {
+        clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
+    }
+
 
     // Release hold of OpenGL objects
     clEnqueueReleaseGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
@@ -113,19 +129,20 @@ void Pipeline::MidFrame(int width, int height) {
     // Finish OpenCL
     clFinish(gpu->queue);
 
+
+
     // Draw updated Canvas texture
     glColor4f(1,1,1,1);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, canvasGL); // Bind OpenGL rendering texture to the GL canvas
     glBegin(GL_QUADS);
-    glTexCoord2i(0, 0); glVertex2i(0, 0);
+    glTexCoord2i(0, 0); glVertex2i(0, 0);   // Set UV and draw coordinates
     glTexCoord2i(0, 1); glVertex2i(0, 1);
     glTexCoord2i(1, 1); glVertex2i(1, 1);
     glTexCoord2i(1, 0); glVertex2i(1, 0);
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0); // Texture is unset
-    glFinish();
 
     // Do not need to finish or flush GL due to buffer swap
 }

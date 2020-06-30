@@ -21,8 +21,8 @@ class GPU {
     cl_command_queue queue;
   
   public:
-    // Builds a CL Program and compiles a CL Kernel from a file path
-    void BuildShaderFromFile(cl_program *program, cl_kernel *kernel, const char* path);
-    // Builds a CL Program and compiles a CL Kernel from a string
-    void BuildShader(cl_program *program, cl_kernel *kernel, const char* source);
+    // Builds a CL Program and compiles a CL Kernel from a file path and shader name
+    void BuildShaderFromFile(cl_program *program, cl_kernel *kernel, const char* path, const char* shader_name);
+    // Builds a CL Program and compiles a CL Kernel from a string and shader name
+    void BuildShader(cl_program *program, cl_kernel *kernel, const char* source, const char* shader_name);
 };

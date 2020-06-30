@@ -13,8 +13,8 @@
 /* Configuration */
 
 // Predefined window width and height for when program is opened
-#define WindowWidth 600
-#define WindowHeight 400
+#define WindowWidth 1000
+#define WindowHeight 800
 
 // Number of primary shaders the grahpics pipeline uses (used for memory allocation and array iteration)
 #define NumPrimaryShaders 1
