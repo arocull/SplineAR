@@ -17,6 +17,7 @@
 #include "src/Program/window.h"
 #include "src/Program/gpu.h"
 #include "src/Render/pipeline.h"
+#include "src/Program/thread_manager.h"
 
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
 int main(int argc, char **argv) {
@@ -52,6 +53,11 @@ int main(int argc, char **argv) {
 
     pipeline.SetupContext();
 
+
+    // Initialize threads
+    ThreadManager threads = ThreadManager(window.glWindow);
+    threads.StartThreads();
+
     
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -65,6 +71,7 @@ int main(int argc, char **argv) {
     // Run until window closes
     while(!glfwWindowShouldClose(window.glWindow)) {
         glfwPollEvents();
+
         clock_gettime(CLOCK_MONOTONIC, &currentTime);
         float DeltaTime = ((currentTime.tv_sec - lastTime.tv_sec) * 1e9 + (currentTime.tv_nsec - lastTime.tv_nsec)) * 1e-9;
         lastTime = currentTime;

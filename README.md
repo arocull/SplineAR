@@ -7,7 +7,14 @@ Uses a mixture of OpenGL and OpenCL, with GLEW and GLFW as assistants. Requires 
 
 `$ sudo apt install nvidia-opencl-dev libgl1-mesa-dev mesa-common-dev libglew-dev`
 
-Currently only runs on NVidia graphics cards (?) on Linux.
+Extra configuration may be necessary for platforms aside from Linux.
+
+List of dependencies:
+- OpenGL
+- OpenCL 2.2 or great
+- GLFW3
+- GLEW
+- pthread
 
 ## Build and Run
 This uses a makefile. Simply sit in the main directory that this README is located in, and run the commands:

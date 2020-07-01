@@ -1,8 +1,8 @@
 CC = g++
 LD = g++
 
-CCFLAGS=-g -O2 `pkg-config --cflags --libs glfw3 gl glu glew OpenCL`
-LDFLAGS=-g -O2 `pkg-config --cflags --libs glfw3 gl glu glew OpenCL`
+CCFLAGS=-g -O2 -pthread `pkg-config --cflags --libs glfw3 gl glu glew OpenCL`
+LDFLAGS=-g -O2 -pthread `pkg-config --cflags --libs glfw3 gl glu glew OpenCL`
 TARGET=main
 
 MODULES   := src src/Render src/Program

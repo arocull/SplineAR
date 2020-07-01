@@ -25,5 +25,6 @@ And finally, a list of OpenCL [Error Codes](https://streamhpc.com/blog/2013-04-2
 
 # Utilities for Later
 [Multithreading](https://stackoverflow.com/questions/21663555/run-two-functions-at-the-same-time)
+Max O'Cull suggested [pthreads](https://randu.org/tutorials/threads/)
 
 Passing [structs to kernels](https://stackoverflow.com/questions/52009087/passing-c-structures-to-opencl-kernel) in OpenCL
