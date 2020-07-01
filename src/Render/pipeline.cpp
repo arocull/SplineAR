@@ -50,8 +50,10 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
 }
 
 void Pipeline::SetupContext() {
-    glEnable(GL_DEPTH_TEST | GL_BLEND_COLOR);
+    glEnable(GL_DEPTH_TEST | GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    // Allow image to transparent and blend
     glDepthFunc(GL_FRONT);
+    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); // Set color before an image for color multiplication
 }
 
 void Pipeline::Close() {
@@ -95,8 +97,8 @@ void Pipeline::RunPipeline(float DeltaTime) {
 
 
 void Pipeline::StartFrame() {
-    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-    glClearDepth(1.0f);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearDepth(5.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     glMatrixMode(GL_PROJECTION);
@@ -129,10 +131,8 @@ void Pipeline::MidFrame(int width, int height) {
     // Finish OpenCL
     clFinish(gpu->queue);
 
-
-
     // Draw updated Canvas texture
-    glColor4f(1,1,1,1);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, canvasGL); // Bind OpenGL rendering texture to the GL canvas
     glBegin(GL_QUADS);

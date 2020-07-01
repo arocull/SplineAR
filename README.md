@@ -3,9 +3,9 @@ A 2D/3D drawing and animation tool
 
 
 ## Dependencies
-Uses a mixture of OpenGL and OpenCL. Requires installation of the following libraries.
+Uses a mixture of OpenGL and OpenCL, with GLEW and GLFW as assistants. Requires installation of the following libraries.
 
-`$ sudo apt install nvidia-opencl-dev libgl1-mesa-dev mesa-common-dev`
+`$ sudo apt install nvidia-opencl-dev libgl1-mesa-dev mesa-common-dev libglew-dev`
 
 Currently only runs on NVidia graphics cards (?) on Linux.
 
