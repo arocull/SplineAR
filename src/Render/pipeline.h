@@ -7,6 +7,7 @@
 #include <glm/vec2.hpp>
 
 #include "src/Program/gpu.h"
+#include "src/Objects/Art/stroke.h"
 
 class Pipeline {
     public:
@@ -29,6 +30,14 @@ class Pipeline {
 
         float time = 0.0f;
 
+        cl_mem* stroke_mem_data;
+        cl_int* strokeData_id;
+        cl_int* strokeData_numPoints;
+        cl_float2* strokeData_positions;
+        cl_float2* strokeData_directions;
+        cl_float* strokeData_thickness;
+        cl_bool* strokeData_shaders;
+
     public:
         // Performs basic setup for GLFW window
         void SetupContext();
@@ -36,11 +45,11 @@ class Pipeline {
         void Close();
 
         // Runs the graphics pipeline--Goes from OpenGL, to OpenCL, to buffer swap
-        void RunPipeline(float DeltaTime);
+        void RunPipeline(float DeltaTime, stroke_info* strokes);
 
     protected:
         // Start pipeline -- runs initial setup, buffer clears, applies camera transforms, etc
-        void StartFrame();
+        void StartFrame(stroke_info* strokes);
         // Run GL and CL pipelines
         void MidFrame(int width, int height);
         // Swaps buffers and pops out of matrix transforms

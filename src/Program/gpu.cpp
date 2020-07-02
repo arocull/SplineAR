@@ -98,3 +98,29 @@ void GPU::BuildShader(cl_program *program, cl_kernel *kernel, const char* source
     *kernel = clCreateKernel(*program, shader_name, &errorcode);
     if (errorcode != 0) { perror("Failed to add shader to kernel\n"); }
 }
+
+cl_mem GPU::AllocateMemory(int spaces, size_t objectSize, cl_mem_flags flags) {
+    #ifdef DEBUG
+        int errcode = 0;
+        cl_mem buffer = clCreateBuffer(context, flags, spaces * objectSize, NULL, &errcode);
+        if (errcode != 0) {
+            perror("ERROR: Failed to allocate memory on GPU\n");
+            printf("\t%i amount with %i size each\n\tCL error code %i\n", spaces, (int) objectSize, errcode);
+        }
+        return buffer;
+    #else
+        return clCreateBuffer(context, flags, spaces * objectSize, NULL, NULL);
+    #endif
+}
+int GPU::WriteMemory(cl_mem memory, const void* value, size_t memorySize, bool blockingWrite) {
+    #ifdef DEBUG
+        int errcode = clEnqueueWriteBuffer(queue, memory, blockingWrite, 0, memorySize, value, 0, NULL, NULL);
+        if (errcode != 0) {
+            perror("ERROR: Failed to write to memory on GPU\n");
+            printf("\tMem object buffer size %i with error code %i\n", (int) memorySize, errcode);
+        }
+        return errcode;
+    #else
+        return clEnqueueWriteBuffer(queue, memory, blockingWrite, 0, memorySize, value, 0, NULL, NULL);
+    #endif
+}

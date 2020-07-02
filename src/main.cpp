@@ -13,11 +13,14 @@
 #include <cstdlib>
 #include <cstdio>
 #include <time.h>
+#include <math.h>
 
 #include "src/Program/window.h"
 #include "src/Program/gpu.h"
 #include "src/Render/pipeline.h"
 #include "src/Program/thread_manager.h"
+
+#include "src/Objects/Art/stroke.h"
 
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
 int main(int argc, char **argv) {
@@ -29,7 +32,7 @@ int main(int argc, char **argv) {
         const char** errorMsg;
         int errorCode = glfwGetError(errorMsg);
         perror("Error: could not create GL window!\n");
-        printf("Code %i with message \'%s\'\n", errorCode, *errorMsg);
+        printf("Code %i with message %s\n", errorCode, *errorMsg);
 
         return -1;
     }
@@ -55,13 +58,25 @@ int main(int argc, char **argv) {
 
 
     // Initialize threads
-    ThreadManager threads = ThreadManager(window.glWindow);
-    threads.StartThreads();
+    // ThreadManager threads = ThreadManager(window.glWindow);
+    // threads.StartThreads();
+
+    stroke_info* strokes = (stroke_info*) calloc(MAX_STROKES, 100);
+    for (int i = 0; i < MAX_STROKES; i++) {
+        BlankStrokeData(&strokes[i], true);
+    }
+
+    InitializeStrokeData(&strokes[0], 200, 50);
+    strokes[0].numPoints = 2;
+    strokes[0].points[1] = glm::vec2(WindowWidth / 2, WindowHeight / 2);
+    strokes[0].thickness[1] = 50.0f;
+    InitializeStrokeData(&strokes[1], 120, 20);
 
     
     // Set up clock for delta time fetching
     timespec lastTime;
     timespec currentTime;
+    float timeRun = 0.0f;
     if (clock_gettime(CLOCK_MONOTONIC, &lastTime) != 0) {
         perror("Error on fetching initial time!");
         return -1;
@@ -75,8 +90,13 @@ int main(int argc, char **argv) {
         clock_gettime(CLOCK_MONOTONIC, &currentTime);
         float DeltaTime = ((currentTime.tv_sec - lastTime.tv_sec) * 1e9 + (currentTime.tv_nsec - lastTime.tv_nsec)) * 1e-9;
         lastTime = currentTime;
+        timeRun += DeltaTime;
+        printf("Last frame took %f seconds\n", DeltaTime);
 
-        pipeline.RunPipeline(DeltaTime);
+        pipeline.RunPipeline(DeltaTime, strokes);
+
+        strokes[0].points[0].x = (WindowWidth / 2) * (1 + cos(timeRun / 2));
+        strokes[0].points[0].y = (WindowHeight / 2) * (1 + + sin(timeRun));
     }
 
 
@@ -86,6 +106,15 @@ int main(int argc, char **argv) {
 
     window.Close();
     glfwTerminate();
+
+    for (int i = 0; i < MAX_STROKES; i++) {
+        free(strokes[i].points);
+        free(strokes[i].dir);
+        free(strokes[i].thickness);
+        free(strokes[i].alpha);
+        free(strokes[i].shaders);
+    }
+    free(strokes);
 
     printf("Closed successfully!\n");
 
