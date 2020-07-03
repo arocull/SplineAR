@@ -6,8 +6,7 @@ kernel void draw_strokes(
     global int* stroke_points,  // Number of points on the stroke
     global float2* positions,   // Positions of stroke points
     global float2* directions,  // Directions of stroke points
-    global float* thickness,    // Thickness of stroke at points
-    global bool* enabledShaders // Shaders that are enabled on the stroke
+    global float* thickness     // Thickness of stroke at points
 ) {
     int x = get_global_id(0);
     int y = get_global_id(1);

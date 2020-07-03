@@ -7,6 +7,7 @@
 #include <glm/vec2.hpp>
 
 #include "src/Program/gpu.h"
+#include "src/Program/gpu_memory.h"
 #include "src/Objects/Art/stroke.h"
 
 class Pipeline {
@@ -30,13 +31,7 @@ class Pipeline {
 
         float time = 0.0f;
 
-        cl_mem* stroke_mem_data;
-        cl_int* strokeData_id;
-        cl_int* strokeData_numPoints;
-        cl_float2* strokeData_positions;
-        cl_float2* strokeData_directions;
-        cl_float* strokeData_thickness;
-        cl_bool* strokeData_shaders;
+        GPUMemory* strokeData[NUM_STROKE_DATA_BUFFERS];
 
     public:
         // Performs basic setup for GLFW window

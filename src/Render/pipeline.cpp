@@ -46,27 +46,17 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
     // Allocate other CL Memory types
     clTime = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(float), NULL, NULL); // Time tracker for OpenCL shaders
 
-    stroke_mem_data = (cl_mem*) calloc(NUM_STROKE_DATA_CLMEM, sizeof(cl_mem));
-    stroke_mem_data[0] = gpu->AllocateMemory(MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);     // Allocate stroke_id
-    stroke_mem_data[1] = gpu->AllocateMemory(MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);     // Allocate number of points for X stroke
+    // GPU Memory objects automatically allocate themselves on CPU and GPU (initialized on both for conversion)
+    strokeData[0] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);  // Stroke IDs
+    strokeData[1] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);  // Num of points in stroke
     #ifdef Enable3D
-        stroke_mem_data[2] = gpu->AllocateMemory(MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z positions of stroke
-        stroke_mem_data[3] = gpu->AllocateMemory(MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z directions of stroke
+        strokeData[2] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z positions of stroke
+        strokeData[3] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z directions of stroke
     #else
-        stroke_mem_data[2] = gpu->AllocateMemory(MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float2));  // X and Y positions of stroke
-        stroke_mem_data[3] = gpu->AllocateMemory(MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float2));  // X and Y directions of stroke
+        strokeData[2] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float2));  // X and Y positions of stroke
+        strokeData[3] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float2));  // X and Y directions of stroke
     #endif
-    stroke_mem_data[4] = gpu->AllocateMemory(MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float));   // Line thickness at given point
-    stroke_mem_data[5] = gpu->AllocateMemory(MAX_STROKES * NUM_SHADERS_CUSTOM, sizeof(cl_bool), CL_MEM_READ_ONLY);   // What custom shaders are applied to the stroke
-
-    // Initialize stroke data on CPU as well in preparation for GPU conversion
-    strokeData_id = (cl_int*) malloc(MAX_STROKES * sizeof(cl_int));
-    strokeData_numPoints = (cl_int*) malloc(MAX_STROKES * sizeof(cl_int));
-    strokeData_positions = (cl_float2*) malloc(MAX_STROKES * MAX_STROKE_POINTS * sizeof(cl_float2));
-    strokeData_directions = (cl_float2*) malloc(MAX_STROKES * MAX_STROKE_POINTS * sizeof(cl_float2));
-    strokeData_thickness =  (cl_float*) malloc(MAX_STROKES * MAX_STROKE_POINTS * sizeof(cl_float));
-    strokeData_shaders =  (cl_bool*) malloc(MAX_STROKES * MAX_STROKE_POINTS * sizeof(cl_bool));
-
+    strokeData[4] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float)); // Line thickness at given point
 
     // Set (Default) Kernel Arguements
     for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
@@ -74,8 +64,8 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
         clSetKernelArg(shaderKernels[i], 1, sizeof(clTime), &clTime);     // Set the time to the second arguement of the given Kernel
     }
     
-    for (int i = 0; i < NUM_STROKE_DATA_CLMEM; i++) {   // Set kernel arguements for stroke data
-        clSetKernelArg(shaderKernels[0], 2 + i, sizeof(stroke_mem_data[i]), &stroke_mem_data[i]);
+    for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {   // Set kernel arguements for stroke data
+        clSetKernelArg(shaderKernels[0], 2 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
     }
 
     //clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
@@ -101,8 +91,8 @@ void Pipeline::Close() {
     clReleaseSampler(uvSampler);
     clReleaseMemObject(clTime);
 
-    for (int i = 0; i < NUM_STROKE_DATA_CLMEM; i++) {
-        clReleaseMemObject(stroke_mem_data[i]);
+    for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
+        strokeData[i]->FreeMemory();
     }
 
     clReleaseMemObject(canvasCL);
@@ -112,13 +102,6 @@ void Pipeline::Close() {
         clReleaseKernel(shaderKernels[i]);
         clReleaseProgram(shaderPrograms[i]);
     }
-
-    free(strokeData_id);
-    free(strokeData_numPoints);
-    free(strokeData_positions);
-    free(strokeData_directions);
-    free(strokeData_thickness);
-    free(strokeData_shaders);
 }
 
 
@@ -157,40 +140,39 @@ void Pipeline::StartFrame(stroke_info* strokes) {
     gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
 
 
-    // Convert stroke data to be meaningfull on GPU
-    for (int i = 0; i < MAX_STROKES; i++) {
-        if (!strokes[i].visible) { // If the stroke is not visible, set GPU version as inactive and do not bother updating info
-            strokes[i].stroke_id = -1;
-            continue;
-        } else strokeData_id[i] = strokes[i].stroke_id;
-        strokeData_numPoints[i] = strokes[i].numPoints;
+    {  // Pre-cast arrays so they do not need to be casted repeatedly, section off to avoid variable confusion, and convert stroke data to be meaningful on GPU
+        cl_int* strokeIDs = ((cl_int*) (strokeData[0]->GetData()));
+        cl_int* numPoints = ((cl_int*) (strokeData[1]->GetData()));
+        cl_float2* positions = ((cl_float2*) (strokeData[2]->GetData()));
+        cl_float2* directions = ((cl_float2*) (strokeData[3]->GetData()));
+        cl_float* thickness = ((cl_float*) (strokeData[4]->GetData()));
 
-        for (int j = 0; j < MAX_STROKE_POINTS; j++) {
-            int index = MAX_STROKE_POINTS * i + j;
-            strokeData_positions[index] = cl_float2();
-            strokeData_positions[index].x = strokes[i].points[j].x;
-            strokeData_positions[index].y = WindowHeight - strokes[i].points[j].y;
+        for (int i = 0; i < MAX_STROKES; i++) {
+            if (!strokes[i].visible) { // If the stroke is not visible, set GPU version as inactive and do not bother updating info
+                strokes[i].stroke_id = -1;
+                continue;
+            } else strokeIDs[i] = strokes[i].stroke_id;    // Cast data to int and then fill
+            numPoints[i] = strokes[i].numPoints;
 
-            strokeData_directions[index] = cl_float2();
-            strokeData_directions[index].x = strokes[i].dir[j].x;
-            strokeData_directions[index].y = -strokes[i].dir[j].y;
+            for (int j = 0; j < MAX_STROKE_POINTS; j++) {
+                int index = MAX_STROKE_POINTS * i + j;
+                positions[index] = cl_float2();
+                positions[index].x = strokes[i].points[j].x;
+                positions[index].y = WindowHeight - strokes[i].points[j].y;
 
-            strokeData_thickness[index] = strokes[i].thickness[j];
-        }
+                directions[index] = cl_float2();
+                directions[index].x = strokes[i].dir[j].x;
+                directions[index].y = -strokes[i].dir[j].y;
 
-        for (int j = 0; j < NUM_SHADERS_CUSTOM; j++) {
-            int index = MAX_STROKE_POINTS * i + j;
-            strokeData_shaders[index] = strokes[i].shaders[j];
+                thickness[index] = strokes[i].thickness[j];
+            }
         }
     }
 
-    // Then copy it over
-    gpu->WriteMemory(stroke_mem_data[0], strokeData_id, MAX_STROKES * sizeof(cl_int));
-    gpu->WriteMemory(stroke_mem_data[1], strokeData_numPoints, MAX_STROKES * sizeof(cl_int));
-    gpu->WriteMemory(stroke_mem_data[2], strokeData_positions, MAX_STROKES * MAX_STROKE_POINTS * sizeof(cl_float2));
-    gpu->WriteMemory(stroke_mem_data[3], strokeData_directions, MAX_STROKES * MAX_STROKE_POINTS * sizeof(cl_float2));
-    gpu->WriteMemory(stroke_mem_data[4], strokeData_thickness, MAX_STROKES * MAX_STROKE_POINTS * sizeof(cl_float));
-    gpu->WriteMemory(stroke_mem_data[5], strokeData_shaders, MAX_STROKES * MAX_STROKE_POINTS * sizeof(cl_bool));
+    // Then copy generated data into GPU
+    for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
+        strokeData[i]->CopyDataToGPU();
+    }
 
 
     glFinish(); // Finish OpenGL queue before allowing OpenCL to grasp GL objects
