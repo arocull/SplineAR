@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
     timespec lastTime;
     timespec currentTime;
     float timeRun = 0.0f;
+    int frames = 0;
     if (clock_gettime(CLOCK_MONOTONIC, &lastTime) != 0) {
         perror("Error on fetching initial time!");
         return -1;
@@ -91,7 +92,7 @@ int main(int argc, char **argv) {
         float DeltaTime = ((currentTime.tv_sec - lastTime.tv_sec) * 1e9 + (currentTime.tv_nsec - lastTime.tv_nsec)) * 1e-9;
         lastTime = currentTime;
         timeRun += DeltaTime;
-        printf("Last frame took %f seconds\n", DeltaTime);
+        frames++;
 
         pipeline.RunPipeline(DeltaTime, strokes);
 
@@ -116,7 +117,7 @@ int main(int argc, char **argv) {
     }
     free(strokes);
 
-    printf("Closed successfully!\n");
+    printf("\nClosed successfully!\n\tTotal frames was %i with an estimated average FPS of %f\n", frames, frames / timeRun);
 
     return 0;
 }
