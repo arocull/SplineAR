@@ -31,7 +31,7 @@ class Pipeline {
 
         float time = 0.0f;
 
-        GPUMemory* strokeData[NUM_STROKE_DATA_BUFFERS];
+        // GPUMemory* strokeData[NUM_STROKE_DATA_BUFFERS];
 
     public:
         // Performs basic setup for GLFW window
@@ -44,9 +44,9 @@ class Pipeline {
 
     protected:
         // Start pipeline -- runs initial setup, buffer clears, applies camera transforms, etc
-        void StartFrame(stroke_info* strokes);
+        void StartFrame(stroke_info* strokes, int width, int height);
         // Run GL and CL pipelines
-        void MidFrame(int width, int height);
+        void MidFrame(stroke_info* strokes, int width, int height);
         // Swaps buffers and pops out of matrix transforms
         void EndFrame();
 };

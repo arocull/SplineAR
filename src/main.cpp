@@ -52,9 +52,9 @@ int main(int argc, char **argv) {
 
     // Initialize OpenCL
     GPU gpu = GPU();
-    //Pipeline pipeline = Pipeline(&gpu, window.glWindow);
+    Pipeline pipeline = Pipeline(&gpu, window.glWindow);
 
-    //pipeline.SetupContext();
+    pipeline.SetupContext();
 
 
     // Initialize threads
@@ -65,16 +65,15 @@ int main(int argc, char **argv) {
     for (int i = 0; i < MAX_STROKES; i++) {
         STROKE_BlankData(&strokes[i], 0, true);
     }
-    printf("a\n");
 
-    STROKE_InitializeData(&strokes[0], 200, 50, 0);
-    printf("b\n");
-    STROKE_ScalePointData(&strokes[0], 2);
-    printf("c\n");
-    strokes[0].points[1] = glm::vec3(WindowWidth / 2, WindowHeight / 2, 0);
-    strokes[0].thickness[1] = 50.0f;
-    STROKE_InitializeData(&strokes[1], 120, 20, 0);
-    printf("d\n");
+    STROKE_InitializeData(&strokes[0], 4);
+    STROKE_SetPointData(&strokes[0], 0, 0.2, 0.05, 1, 20);
+    STROKE_SetPointData(&strokes[0], 1, 0.5, 0.5, 1, 50);
+    STROKE_SetPointData(&strokes[0], 2, 0.7, 0.7, 1, 40);
+    STROKE_SetPointData(&strokes[0], 3, 0.5, 0.3, 1, 20);
+    strokes[0].closed = true;
+    STROKE_InitializeData(&strokes[1], 1);
+    STROKE_SetPointData(&strokes[1], 0, 0.1, 0.1, 1, 10);
 
     // Basic interop test
     glm::vec4 testPointData = STROKE_GetPoint(&strokes[0], 0.5);
@@ -101,15 +100,16 @@ int main(int argc, char **argv) {
         timeRun += DeltaTime;
         frames++;
 
-        //pipeline.RunPipeline(DeltaTime, strokes);
+        pipeline.RunPipeline(DeltaTime, strokes);
 
-        strokes[0].points[0].x = (WindowWidth / 2) * (1 + cos(timeRun / 2));
-        strokes[0].points[0].y = (WindowHeight / 2) * (1 + + sin(timeRun));
+        strokes[0].points[0].x = (1 + cos(timeRun / 2)) / 2;
+        strokes[0].points[0].y = (1 + + sin(timeRun)) / 2;
     }
+    printf("Loop ended. Closing program...\n");
 
 
     // Free OpenCL
-    // pipeline.Close();
+    pipeline.Close();
     gpu.Close();
 
     window.Close();

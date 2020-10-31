@@ -36,7 +36,7 @@ typedef struct stroke_info {
 // Fills out stroke data with default values up to X number points
 void STROKE_BlankData(stroke_info* stroke, int numPoints, bool firstTime);
 // Initializes a stroke object and fills out blank data
-void STROKE_InitializeData(stroke_info* stroke, double startX, double startY, double startZ);
+void STROKE_InitializeData(stroke_info* stroke, int numPoints);
 
 // Dynamically allocates and/or resizes a stroke to contain more points
 void STROKE_ScalePointData(stroke_info* stroke, int newNumPoints);

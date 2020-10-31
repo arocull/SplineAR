@@ -47,16 +47,13 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
     clTime = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(float), NULL, NULL); // Time tracker for OpenCL shaders
 
     // GPU Memory objects automatically allocate themselves on CPU and GPU (initialized on both for conversion)
+    /*
     strokeData[0] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);  // Stroke IDs
     strokeData[1] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);  // Num of points in stroke
-    #ifdef Enable3D
-        strokeData[2] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z positions of stroke
-        strokeData[3] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z directions of stroke
-    #else
-        strokeData[2] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float2));  // X and Y positions of stroke
-        strokeData[3] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float2));  // X and Y directions of stroke
-    #endif
+    strokeData[2] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z positions of stroke
+    strokeData[3] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z directions of stroke
     strokeData[4] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float)); // Line thickness at given point
+    */
 
     // Set (Default) Kernel Arguements
     for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
@@ -64,9 +61,9 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
         clSetKernelArg(shaderKernels[i], 1, sizeof(clTime), &clTime);     // Set the time to the second arguement of the given Kernel
     }
     
-    for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {   // Set kernel arguements for stroke data
+    /*for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {   // Set kernel arguements for stroke data
         clSetKernelArg(shaderKernels[0], 2 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
-    }
+    }*/
 
     //clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
 }
@@ -91,9 +88,9 @@ void Pipeline::Close() {
     clReleaseSampler(uvSampler);
     clReleaseMemObject(clTime);
 
-    for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
+    /*for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
         strokeData[i]->FreeMemory();
-    }
+    }*/
 
     clReleaseMemObject(canvasCL);
     glDeleteTextures(1, &canvasGL);
@@ -114,30 +111,31 @@ void Pipeline::RunPipeline(float DeltaTime, stroke_info* strokes) {
 
     time += DeltaTime;
 
-    StartFrame(strokes);
-    MidFrame(WindowWidth, WindowHeight);
+    StartFrame(strokes, width, height);
+    MidFrame(strokes, width, height);
     EndFrame();
 
     pipelineRunning = false;
 }
 
 
-void Pipeline::StartFrame(stroke_info* strokes) {
+void Pipeline::StartFrame(stroke_info* strokes, int width, int height) {
     // Set up GL projection matrix
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClearDepth(5.0f);
+    glClearDepth(10.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+    double windowAspect = width / height;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, 1, 0, 1, 0, 1000);
-    // gluPerspective(70, width / height, 1.0f, 100);
+    glOrtho(0, windowAspect, 0, 1, 0, 10); // TODO: Make left side and right side of windowAspect centered
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
 
     // Start updating memory and piping stroke info into OpenCL (requires data conversion)--potentially call read-lock here?
-    gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
+    // gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
 
 
     /*{  // Pre-cast arrays so they do not need to be casted repeatedly, section off to avoid variable confusion, and convert stroke data to be meaningful on GPU
@@ -167,47 +165,64 @@ void Pipeline::StartFrame(stroke_info* strokes) {
                 thickness[index] = strokes[i].thickness[j];
             }
         }
-    }*/
+    }
 
     // Then copy generated data into GPU
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
         strokeData[i]->CopyDataToGPU();
-    }
+    }*/
 
 
     glFinish(); // Finish OpenGL queue before allowing OpenCL to grasp GL objects
 }
-void Pipeline::MidFrame(int width, int height) {
+void Pipeline::MidFrame(stroke_info* strokes, int width, int height) {
     // Fetch OpenGL objects for use in OpenCL
-    clEnqueueAcquireGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
+    // clEnqueueAcquireGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
 
     // Perform remaining memory updates
 
     // Run shaders
-    size_t work_size[] = {(size_t) width, (size_t) height};
-    for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
-        clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
-    }
+    // size_t work_size[] = {(size_t) width, (size_t) height};
+    // for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
+    //     clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
+    // }
 
+    // Finish OpenCL to allow OpenGL to have control of objects again
+    // clFinish(gpu->queue);
 
     // Release hold of OpenGL objects
-    clEnqueueReleaseGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
-
-    // Finish OpenCL to allow OpenGL to have control of ojbects again
-    clFinish(gpu->queue);
+    // clEnqueueReleaseGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
 
     // Draw updated Canvas texture
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, canvasGL); // Bind OpenGL rendering texture to the GL canvas
-    glBegin(GL_QUADS);
-    glTexCoord2i(0, 0); glVertex2i(0, 0);   // Set UV and draw coordinates
-    glTexCoord2i(0, 1); glVertex2i(0, 1);
-    glTexCoord2i(1, 1); glVertex2i(1, 1);
-    glTexCoord2i(1, 0); glVertex2i(1, 0);
-    glEnd();
-    glDisable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, 0); // Texture is unset
+    // glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    // glEnable(GL_TEXTURE_2D);
+    // glDisable(GL_DEPTH_TEST);
+    // glBindTexture(GL_TEXTURE_2D, canvasGL); // Bind OpenGL rendering texture to the GL canvas
+    // glBegin(GL_QUADS);
+    // glTexCoord2i(0, 0); glVertex2i(0, 0);   // Set UV and draw coordinates
+    // glTexCoord2i(0, 1); glVertex2i(0, 1);
+    // glTexCoord2i(1, 1); glVertex2i(1, 1);
+    // glTexCoord2i(1, 0); glVertex2i(1, 0);
+    // glEnd();
+    // glDisable(GL_TEXTURE_2D);
+    // glBindTexture(GL_TEXTURE_2D, 0); // Texture is unset
+
+    // Draw strokes ontop of texture
+    glEnable(GL_DEPTH_TEST);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    for (int i = 0; i < MAX_STROKES; i++) {
+        if (strokes[i].numPoints > 2) {
+            printf("\tBeginning GL polygon of stroke %i\n", strokes[i].stroke_id);
+            glBegin(GL_POLYGON);
+            for (int x = 0; x < strokes[i].numPoints; x++) {
+                glVertex2f(strokes[i].points[x].x, strokes[i].points[x].y);//, strokes[i].points[x].z);
+                printf("\t\tDrawing point %f, %f, %f\n", strokes[i].points[x].x, strokes[i].points[x].y, strokes[i].points[x].z);
+            }
+            glEnd();
+        }
+    }
+
 
     // Do not need to finish or flush GL thanks to buffer swap
 }

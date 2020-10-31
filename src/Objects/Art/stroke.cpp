@@ -23,12 +23,12 @@ void STROKE_BlankData(stroke_info* stroke, int numPoints, bool firstTime) {
     // }
 }
 
-void STROKE_InitializeData(stroke_info* stroke, double startX, double startY, double startZ) {
+void STROKE_InitializeData(stroke_info* stroke, int numPoints) {
     stroke->stroke_id = strokesMade;
     strokesMade++;
 
-    STROKE_ScalePointData(stroke, 1);
-    STROKE_SetPointData(stroke, 0, startX, startY, startZ, 20);
+    STROKE_ScalePointData(stroke, numPoints);
+    //STROKE_SetPointData(stroke, 0, startX, startY, startZ, 20);
 }
 
 void STROKE_ScalePointData(stroke_info* stroke, int newNumPoints) {
