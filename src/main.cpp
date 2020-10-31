@@ -52,26 +52,33 @@ int main(int argc, char **argv) {
 
     // Initialize OpenCL
     GPU gpu = GPU();
-    Pipeline pipeline = Pipeline(&gpu, window.glWindow);
+    //Pipeline pipeline = Pipeline(&gpu, window.glWindow);
 
-    pipeline.SetupContext();
+    //pipeline.SetupContext();
 
 
     // Initialize threads
     // ThreadManager threads = ThreadManager(window.glWindow);
     // threads.StartThreads();
 
-    stroke_info* strokes = (stroke_info*) calloc(MAX_STROKES, 100);
+    stroke_info* strokes = (stroke_info*) calloc(MAX_STROKES, sizeof(stroke_info));
     for (int i = 0; i < MAX_STROKES; i++) {
-        BlankStrokeData(&strokes[i], true);
+        STROKE_BlankData(&strokes[i], 0, true);
     }
+    printf("a\n");
 
-    InitializeStrokeData(&strokes[0], 200, 50);
-    strokes[0].numPoints = 2;
-    strokes[0].points[1] = glm::vec2(WindowWidth / 2, WindowHeight / 2);
+    STROKE_InitializeData(&strokes[0], 200, 50, 0);
+    printf("b\n");
+    STROKE_ScalePointData(&strokes[0], 2);
+    printf("c\n");
+    strokes[0].points[1] = glm::vec3(WindowWidth / 2, WindowHeight / 2, 0);
     strokes[0].thickness[1] = 50.0f;
-    InitializeStrokeData(&strokes[1], 120, 20);
+    STROKE_InitializeData(&strokes[1], 120, 20, 0);
+    printf("d\n");
 
+    // Basic interop test
+    glm::vec4 testPointData = STROKE_GetPoint(&strokes[0], 0.5);
+    printf("Test point (%f, %f, %f) with thickness %f\n", testPointData.x, testPointData.y, testPointData.z, testPointData.w);
     
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -94,7 +101,7 @@ int main(int argc, char **argv) {
         timeRun += DeltaTime;
         frames++;
 
-        pipeline.RunPipeline(DeltaTime, strokes);
+        //pipeline.RunPipeline(DeltaTime, strokes);
 
         strokes[0].points[0].x = (WindowWidth / 2) * (1 + cos(timeRun / 2));
         strokes[0].points[0].y = (WindowHeight / 2) * (1 + + sin(timeRun));
@@ -102,18 +109,15 @@ int main(int argc, char **argv) {
 
 
     // Free OpenCL
-    pipeline.Close();
+    // pipeline.Close();
     gpu.Close();
 
     window.Close();
     glfwTerminate();
 
     for (int i = 0; i < MAX_STROKES; i++) {
-        free(strokes[i].points);
-        free(strokes[i].dir);
-        free(strokes[i].thickness);
-        free(strokes[i].alpha);
-        free(strokes[i].shaders);
+        STROKE_ScalePointData(&strokes[i], 0); // Deallocate stroke data, but don't attempt to free strokes that don't have point data present anyways
+        //free(strokes[i].shaders);
     }
     free(strokes);
 

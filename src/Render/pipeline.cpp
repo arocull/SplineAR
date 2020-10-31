@@ -140,11 +140,11 @@ void Pipeline::StartFrame(stroke_info* strokes) {
     gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
 
 
-    {  // Pre-cast arrays so they do not need to be casted repeatedly, section off to avoid variable confusion, and convert stroke data to be meaningful on GPU
+    /*{  // Pre-cast arrays so they do not need to be casted repeatedly, section off to avoid variable confusion, and convert stroke data to be meaningful on GPU
         cl_int* strokeIDs = ((cl_int*) (strokeData[0]->GetData()));
         cl_int* numPoints = ((cl_int*) (strokeData[1]->GetData()));
-        cl_float2* positions = ((cl_float2*) (strokeData[2]->GetData()));
-        cl_float2* directions = ((cl_float2*) (strokeData[3]->GetData()));
+        cl_float2* positions = ((cl_float3*) (strokeData[2]->GetData()));
+        cl_float2* directions = ((cl_float3*) (strokeData[3]->GetData()));
         cl_float* thickness = ((cl_float*) (strokeData[4]->GetData()));
 
         for (int i = 0; i < MAX_STROKES; i++) {
@@ -156,18 +156,18 @@ void Pipeline::StartFrame(stroke_info* strokes) {
 
             for (int j = 0; j < MAX_STROKE_POINTS; j++) {
                 int index = MAX_STROKE_POINTS * i + j;
-                positions[index] = cl_float2();
+                positions[index] = cl_float3();
                 positions[index].x = strokes[i].points[j].x;
                 positions[index].y = WindowHeight - strokes[i].points[j].y;
 
-                directions[index] = cl_float2();
+                directions[index] = cl_float3();
                 directions[index].x = strokes[i].dir[j].x;
                 directions[index].y = -strokes[i].dir[j].y;
 
                 thickness[index] = strokes[i].thickness[j];
             }
         }
-    }
+    }*/
 
     // Then copy generated data into GPU
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {

@@ -2,18 +2,15 @@
 
 #include "src/config.h"
 
+#include <cstdio>
+#include <math.h>
+
 #include <CL/cl.h>
 #include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
 
-// Each
-typedef struct polynomial {
-    float a;
-    float b;
-    float c;
-    float d;
-} polynomial;
-
-/* Stroke Info - C Strucutre
+/* Stroke Info - C Structure
 * 
 * Retains information about a pen stroke
 * Contains 2D/3D positions, directions, and curves
@@ -22,28 +19,38 @@ typedef struct polynomial {
 typedef struct stroke_info {
     int stroke_id;
     int numPoints;
-    #ifdef Enable3D
-        glm::vec3* points;
-        glm::vec3* dir;
-    #else
-        glm::vec2* points;
-        glm::vec2* dir;
-    #endif
-    float* thickness;   // Read line thickness at given point
-    float* alpha;       // Read line alpha at given point
-    bool* shaders;      // What shaders are enabled on this stroke?
-    bool visible;
+
+    // Point Data
+    glm::vec3* points;
+    glm::vec3* leftHandles;     // Bezier curve handles--set to nullptrs
+    glm::vec3* rightHandles;    // Bezier curve handles
+    float* thickness;           // Read line thickness at given point
+    // float* alpha;            // Read line alpha at given point
+    
+    // Shape info
+    bool closed;        // If true, data from the last point will wrap back to the first point
+    // bool* shaders;      // What shaders are enabled on this stroke?
+    bool visible;       // Should the stroke be displayed?
 } stroke_info;
 
+// Fills out stroke data with default values up to X number points
+void STROKE_BlankData(stroke_info* stroke, int numPoints, bool firstTime);
+// Initializes a stroke object and fills out blank data
+void STROKE_InitializeData(stroke_info* stroke, double startX, double startY, double startZ);
 
-// Fills out stroke data with default values
-void BlankStrokeData(stroke_info* stroke, bool doAlloc = false);
-// Initialize a given piece of stroke data (makes it 'active' and fills out initial positions)
-void InitializeStrokeData(stroke_info* stroke, double startX, double startY);
-// Returns the closest parametric value (float between 0 and 1) of curve based on given X and Y position
-// float GetParametricOnStroke(stroke_info* stroke, double x, double y);
-// Returns info on the at the given parametric
-// void GetStrokeInfo(stroke_info* stroke, float parametric);
+// Dynamically allocates and/or resizes a stroke to contain more points
+void STROKE_ScalePointData(stroke_info* stroke, int newNumPoints);
+// Allocates all point data on the stroke to the given array size
+void STROKE_AllocatePointData(stroke_info* stroke, int newNumPoints);
+// Deallocates all point data on a given stroke
+void STROKE_DeallocatePointData(stroke_info* stroke);
+// Sets the given point index on a stroke to the given value (eliminates bezier handles)
+void STROKE_SetPointData(stroke_info* stroke, int index, double x, double y, double z, float thickness);
+
+
+// Returns the point info on the stroke at the given parametric
+// Returns a vector4 - (x, y, z, thickness)
+glm::vec4 STROKE_GetPoint(stroke_info* stroke, float parametric);
 
 /*
 CL Stroke Info - Listed in pipeline
