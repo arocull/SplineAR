@@ -8,6 +8,7 @@
 
 #include "src/Program/gpu.h"
 #include "src/Program/gpu_memory.h"
+#include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 
 class Pipeline {
@@ -40,13 +41,13 @@ class Pipeline {
         void Close();
 
         // Runs the graphics pipeline--Goes from OpenGL, to OpenCL, to buffer swap
-        void RunPipeline(float DeltaTime, stroke_info* strokes);
+        void RunPipeline(float DeltaTime, Stroke** strokes);
 
     protected:
         // Start pipeline -- runs initial setup, buffer clears, applies camera transforms, etc
-        void StartFrame(stroke_info* strokes, int width, int height);
+        void StartFrame(Stroke** strokes, int width, int height);
         // Run GL and CL pipelines
-        void MidFrame(stroke_info* strokes, int width, int height);
+        void MidFrame(Stroke** strokes, int width, int height);
         // Swaps buffers and pops out of matrix transforms
         void EndFrame();
 };

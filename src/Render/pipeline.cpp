@@ -102,7 +102,7 @@ void Pipeline::Close() {
 }
 
 
-void Pipeline::RunPipeline(float DeltaTime, stroke_info* strokes) {
+void Pipeline::RunPipeline(float DeltaTime, Stroke** strokes) {
     if (!canRunPipeline || pipelineRunning) return;
     pipelineRunning = true;
 
@@ -119,7 +119,7 @@ void Pipeline::RunPipeline(float DeltaTime, stroke_info* strokes) {
 }
 
 
-void Pipeline::StartFrame(stroke_info* strokes, int width, int height) {
+void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
     // Set up GL projection matrix
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClearDepth(10.0f);
@@ -175,7 +175,7 @@ void Pipeline::StartFrame(stroke_info* strokes, int width, int height) {
 
     glFinish(); // Finish OpenGL queue before allowing OpenCL to grasp GL objects
 }
-void Pipeline::MidFrame(stroke_info* strokes, int width, int height) {
+void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
     // Fetch OpenGL objects for use in OpenCL
     // clEnqueueAcquireGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
 
@@ -212,12 +212,12 @@ void Pipeline::MidFrame(stroke_info* strokes, int width, int height) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glColor3f(1.0f, 0.0f, 0.0f);
     for (int i = 0; i < MAX_STROKES; i++) {
-        if (strokes[i].numPoints > 2) {
-            printf("\tBeginning GL polygon of stroke %i\n", strokes[i].stroke_id);
+        if (strokes[i]->length() > 2) {
+            printf("\tBeginning GL polygon of stroke %i\n", i);
             glBegin(GL_POLYGON);
-            for (int x = 0; x < strokes[i].numPoints; x++) {
-                glVertex2f(strokes[i].points[x].x, strokes[i].points[x].y);//, strokes[i].points[x].z);
-                printf("\t\tDrawing point %f, %f, %f\n", strokes[i].points[x].x, strokes[i].points[x].y, strokes[i].points[x].z);
+            for (int x = 0; x < strokes[i]->length(); x++) {
+                glVertex2f(strokes[i]->points[x]->pos.x, strokes[i]->points[x]->pos.y);
+                printf("\t\tDrawing point %f, %f\n", strokes[i]->points[x]->pos.x, strokes[i]->points[x]->pos.y);
             }
             glEnd();
         }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "src/config.h"
 #include "src/Util/math.h"
 

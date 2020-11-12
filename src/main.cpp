@@ -20,6 +20,7 @@
 #include "src/Render/pipeline.h"
 #include "src/Program/thread_manager.h"
 
+#include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
@@ -61,24 +62,24 @@ int main(int argc, char **argv) {
     // ThreadManager threads = ThreadManager(window.glWindow);
     // threads.StartThreads();
 
-    stroke_info* strokes = (stroke_info*) calloc(MAX_STROKES, sizeof(stroke_info));
+    Stroke** strokes = (Stroke**) calloc(MAX_STROKES, sizeof(Stroke*));
     for (int i = 0; i < MAX_STROKES; i++) {
-        STROKE_BlankData(&strokes[i], 0, true);
+        strokes[i] = nullptr;
     }
+    strokes[0] = new Stroke();
+    strokes[0]->pushPoint(glm::vec2(0.4, 0.5));
 
-    STROKE_InitializeData(&strokes[0], 4);
-    STROKE_SetPointData(&strokes[0], 0, 0.2, 0.05, 1, 20);
-    STROKE_SetPointData(&strokes[0], 1, 0.5, 0.5, 1, 50);
-    STROKE_SetPointData(&strokes[0], 2, 0.7, 0.7, 1, 40);
-    STROKE_SetPointData(&strokes[0], 3, 0.5, 0.3, 1, 20);
-    strokes[0].closed = true;
-    STROKE_InitializeData(&strokes[1], 1);
-    STROKE_SetPointData(&strokes[1], 0, 0.1, 0.1, 1, 10);
+    strokes[0]->points[0]->pos.x = 0.2;
+    strokes[0]->points[0]->pos.y = 0.2;
+    strokes[0]->points[0]->thickness = 50;
+    strokes[0]->points[1]->thickness = 50;
+
 
     // Basic interop test
-    glm::vec4 testPointData = STROKE_GetPoint(&strokes[0], 0.5);
-    printf("Test point (%f, %f, %f) with thickness %f\n", testPointData.x, testPointData.y, testPointData.z, testPointData.w);
-    
+    Point* testPointData = STROKE_GetPoint(strokes[0], 0.5);
+    printf("Test point (%f, %f) with thickness %f\n", testPointData->pos.x, testPointData->pos.y, testPointData->thickness);
+    delete testPointData;
+
     // Set up clock for delta time fetching
     timespec lastTime;
     timespec currentTime;
@@ -102,8 +103,8 @@ int main(int argc, char **argv) {
 
         pipeline.RunPipeline(DeltaTime, strokes);
 
-        strokes[0].points[0].x = (1 + cos(timeRun / 2)) / 2;
-        strokes[0].points[0].y = (1 + + sin(timeRun)) / 2;
+        strokes[0]->points[0]->pos.x = (1 + cos(timeRun / 2)) / 2;
+        strokes[0]->points[0]->pos.y = (1 + + sin(timeRun)) / 2;
     }
     printf("Loop ended. Closing program...\n");
 
@@ -116,8 +117,7 @@ int main(int argc, char **argv) {
     glfwTerminate();
 
     for (int i = 0; i < MAX_STROKES; i++) {
-        STROKE_ScalePointData(&strokes[i], 0); // Deallocate stroke data, but don't attempt to free strokes that don't have point data present anyways
-        //free(strokes[i].shaders);
+        if (strokes[i]) delete strokes[i];
     }
     free(strokes);
 
