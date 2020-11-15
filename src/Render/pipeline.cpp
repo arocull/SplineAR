@@ -208,21 +208,44 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
     // glBindTexture(GL_TEXTURE_2D, 0); // Texture is unset
 
     // Draw strokes ontop of texture
-    glEnable(GL_DEPTH_TEST);
+    // glEnable(GL_DEPTH_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glColor3f(1.0f, 0.0f, 0.0f);
     for (int i = 0; i < MAX_STROKES; i++) {
-        if (strokes[i]->length() > 2) {
+        Stroke* stroke = strokes[i];
+        if (stroke && stroke->visible) {
             printf("\tBeginning GL polygon of stroke %i\n", i);
-            glBegin(GL_POLYGON);
-            for (int x = 0; x < strokes[i]->length(); x++) {
-                glVertex2f(strokes[i]->points[x]->pos.x, strokes[i]->points[x]->pos.y);
-                printf("\t\tDrawing point %f, %f\n", strokes[i]->points[x]->pos.x, strokes[i]->points[x]->pos.y);
+            int strokeLen = stroke->length();
+
+            if (stroke->closed && strokeLen > 2) {   // Only fill the shape if it is closed
+                glColor3f(1.0f, 0.0f, ((float) i / MAX_STROKES));
+                glBegin(GL_POLYGON);
+                for (int x = 0; x < strokeLen; x++) {
+                    glVertex2f(stroke->points[x]->pos.x, stroke->points[x]->pos.y);
+                }
+                glEnd();
             }
-            glEnd();
+            
+            // Outline stroke
+            glColor3f(1.0f, 1.0f, 1.0f);
+            for (int x = 1; x < strokeLen; x++) {
+                glLineWidth(stroke->points[x]->thickness);
+                glBegin(GL_LINES);
+                glVertex2f(stroke->points[x-1]->pos.x, stroke->points[x-1]->pos.y);
+                glVertex2f(stroke->points[x]->pos.x, stroke->points[x]->pos.y);
+                glEnd();
+
+                // printf("\t\tDrawing point %f, %f\n", stroke->points[x]->pos.x, stroke->points[x]->pos.y);
+            }
+
+            if (stroke->closed) { // Closing line for shape
+                glLineWidth(stroke->points[strokeLen-1]->thickness);
+                glBegin(GL_LINES);
+                glVertex2f(stroke->points[strokeLen-1]->pos.x, stroke->points[strokeLen-1]->pos.y);
+                glVertex2f(stroke->points[0]->pos.x, stroke->points[0]->pos.y);
+                glEnd();
+            }
         }
     }
-
 
     // Do not need to finish or flush GL thanks to buffer swap
 }

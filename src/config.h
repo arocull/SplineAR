@@ -21,7 +21,7 @@
     #define WindowHeight 800
 
     // Maximum number of CPU threads that can be used
-    #define MAX_THREADS 3
+    #define MAX_THREADS 1
 
 
 /* PIPELINE CONFIG */

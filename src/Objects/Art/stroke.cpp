@@ -2,7 +2,8 @@
 
 // Initialize new stroke object
 Stroke::Stroke() {
-    points = {
+    points = {  // We need a minimum of 2 points to create a stroke
+        new Point(glm::vec2(0, 0)),
         new Point(glm::vec2(0, 0))
     };
 }
@@ -15,6 +16,11 @@ Stroke::~Stroke() {
     points.clear();
 }
 
+// Pushes the given point into the point vector
+void Stroke::pushPoint(Point* newPoint) {
+    points.push_back(newPoint);
+}
+// Creates a point at the given position, inheriting properties from the last point in the array, and pushes the point to the point vector
 void Stroke::pushPoint(glm::vec2 pointPosition) {
     int len = length();
     Point* newPoint = new Point(pointPosition);
@@ -26,21 +32,23 @@ void Stroke::pushPoint(glm::vec2 pointPosition) {
     newPoint->thickness = lastPoint->thickness;
     newPoint->opacity = lastPoint->opacity;
     
-    points.push_back(newPoint);
+    pushPoint(newPoint);
 }
 
+// Returns the number of points in the stroke
 int Stroke::length() {
     return (int) points.size();
 }
 
 
-Point* STROKE_GetPoint(Stroke* stroke, float parametric) {
-    float t = parametric * (stroke->length() - (!stroke->closed)); // Count 1 less index if stroke is not closed (as we won't be performing wrapping)
+// Returns a point from the given parametric
+Point* Stroke::getPoint(float parametric) {
+    float t = parametric * (length() - (!closed)); // Count 1 less index if stroke is not closed (as we won't be performing wrapping)
     int index = (int) t; // Automatically rounds down to nearest integer
     int indexPlusOne = index + 1;
-    if (stroke->closed && indexPlusOne >= stroke->length()) { indexPlusOne = 0; } // Wrap to bottom
+    if (closed && indexPlusOne >= length()) { indexPlusOne = 0; } // Wrap to bottom
 
     printf("Parametric %f, index %i, indexPlusOne%i\n", t, index, indexPlusOne);
 
-    return POINT_Blend(stroke->points[index], stroke->points[indexPlusOne], t);
+    return POINT_Blend(points[index], points[indexPlusOne], t);
 }

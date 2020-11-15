@@ -18,4 +18,6 @@ Point* POINT_Blend(Point* a, Point* b, float alpha) {
 
     ret->thickness = lerp(a->thickness, b->thickness, alpha);
     ret->opacity = lerp(a->thickness, b->thickness, alpha);
+
+    return ret;
 }

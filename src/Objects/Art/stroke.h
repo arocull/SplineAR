@@ -28,18 +28,18 @@ class Stroke {
         std::vector<Point*> points;
         
         // Shape info
-        bool closed;        // If true, data from the last point will wrap back to the first point
-        bool visible;       // Should the stroke be displayed?
+        bool closed = false;        // If true, data from the last point will wrap back to the first point
+        bool visible = true;       // Should the stroke be displayed?
 
     private:
 
     public:
+        void pushPoint(Point* point);
         void pushPoint(glm::vec2 newPoint);
 
         int length();
+
+        // Returns the point info on the stroke at the given parametric
+        // Returns a newly allocated Point* (note: must be deleted after use)
+        Point* getPoint(float parametric);
 };
-
-
-// Returns the point info on the stroke at the given parametric
-// Returns a newly allocated Point* (note: must be )
-Point* STROKE_GetPoint(Stroke* stroke, float parametric);
