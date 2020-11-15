@@ -19,8 +19,11 @@
 #include "src/Program/gpu.h"
 #include "src/Render/pipeline.h"
 #include "src/Program/thread_manager.h"
+#include "src/Program/input_manager.h"
 
+#include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
+#include "src/Objects/Tools/brush.h"
 
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
 int main(int argc, char **argv) {
@@ -57,22 +60,39 @@ int main(int argc, char **argv) {
     pipeline.SetupContext();
 
 
+    // Set up input sampler
+    InputManager* inputManager = new InputManager(window.glWindow);
+
+
     // Initialize threads
     // ThreadManager threads = ThreadManager(window.glWindow);
     // threads.StartThreads();
 
-    stroke_info* strokes = (stroke_info*) calloc(MAX_STROKES, 100);
+    Stroke** strokes = (Stroke**) calloc(MAX_STROKES, sizeof(Stroke*));
     for (int i = 0; i < MAX_STROKES; i++) {
-        BlankStrokeData(&strokes[i], true);
+        strokes[i] = nullptr;
     }
+    strokes[0] = new Stroke();
+    strokes[0]->pushPoint(glm::vec2(0.3, 0.7));
+    strokes[0]->closed = true;
 
-    InitializeStrokeData(&strokes[0], 200, 50);
-    strokes[0].numPoints = 2;
-    strokes[0].points[1] = glm::vec2(WindowWidth / 2, WindowHeight / 2);
-    strokes[0].thickness[1] = 50.0f;
-    InitializeStrokeData(&strokes[1], 120, 20);
+    strokes[0]->points[0]->pos.x = 0.2;
+    strokes[0]->points[0]->pos.y = 0.2;
+    strokes[0]->points[1]->pos.x = 0.4;
+    strokes[0]->points[1]->pos.y = 0.5;
+    strokes[0]->points[0]->thickness = 50;
+    strokes[0]->points[1]->thickness = 50;
+    strokes[0]->points[2]->thickness = 40;
 
-    
+    Brush* brush = new Brush();
+    inputManager->setBrush(brush);
+
+
+    // Basic interop test
+    Point* testPointData = strokes[0]->getPoint(0.5f);
+    printf("Test point (%f, %f) with thickness %f\n", testPointData->pos.x, testPointData->pos.y, testPointData->thickness);
+    delete testPointData;
+
     // Set up clock for delta time fetching
     timespec lastTime;
     timespec currentTime;
@@ -94,26 +114,42 @@ int main(int argc, char **argv) {
         timeRun += DeltaTime;
         frames++;
 
+        Stroke* newStroke = inputManager->tickInput();
+        if (newStroke) { // If a stroke was created, go through all strokes and fill the next one with this one
+            bool placed = false;
+            for (int i = 0; i < MAX_STROKES && !placed; i++) {
+                if (!strokes[i]) {
+                    strokes[i] = newStroke;
+                    placed = true;
+                }
+            }
+            if (!placed) { // If we are unable to place the stroke, forcibly end the stroke and delete it
+                brush->endStroke();
+                delete newStroke;
+            }
+        }
+
         pipeline.RunPipeline(DeltaTime, strokes);
 
-        strokes[0].points[0].x = (WindowWidth / 2) * (1 + cos(timeRun / 2));
-        strokes[0].points[0].y = (WindowHeight / 2) * (1 + + sin(timeRun));
+        strokes[0]->points[0]->pos.x = (1 + cos(timeRun / 2)) / 2;
+        strokes[0]->points[0]->pos.y = (1 + + sin(timeRun)) / 2;
     }
+    printf("Loop ended. Closing program...\n");
 
 
     // Free OpenCL
     pipeline.Close();
     gpu.Close();
 
+    delete inputManager;
+
     window.Close();
     glfwTerminate();
 
+    delete brush;
+
     for (int i = 0; i < MAX_STROKES; i++) {
-        free(strokes[i].points);
-        free(strokes[i].dir);
-        free(strokes[i].thickness);
-        free(strokes[i].alpha);
-        free(strokes[i].shaders);
+        if (strokes[i]) delete strokes[i];
     }
     free(strokes);
 

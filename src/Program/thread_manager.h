@@ -8,8 +8,6 @@
 #include <cstdio>
 #include <pthread.h>
 
-#include <GLFW/glfw3.h>
-
 // Data struct given to thread
 typedef struct input_thread_data {
     int thread_id;
@@ -18,16 +16,13 @@ typedef struct input_thread_data {
     double x_samples[MaxInputSamples];
     double y_samples[MaxInputSamples];
     int currentSample;
-    GLFWwindow* context;
 } input_thread_data;
 
 class ThreadManager {
     public:
-        ThreadManager(GLFWwindow* glfwContext);
+        ThreadManager();
     
     private:
-        GLFWwindow* context;
-
         input_thread_data* input_data;
 
     public:

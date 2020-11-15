@@ -2,42 +2,18 @@
 
 bool stopping = false;
 
-
+// NOTE: glfw cannot be used in any threads outside of main thread
 // Function executed by input thread
 void *input_thread_main(void *arg) {
     input_thread_data* data = (input_thread_data*) arg;
 
-    glfwPollEvents();
-
     printf("testing a %i \n", data->thread_id);
-    
-    data->mouse_down = (glfwGetMouseButton(data->context, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
 
-    printf("testing b %i \n", data->thread_id);
-
-    if (data->mouse_down) {
-        if (!data->mouse_was_down) data->currentSample = 0;
-        glfwGetCursorPos(data->context, &data->x_samples[data->currentSample], &data->y_samples[data->currentSample]);
-        data->currentSample++;
-        data->mouse_was_down = data->mouse_down;
-        printf("Mouse down\n");
-    }
-
-    printf("testing c %i \n", data->thread_id);
-
-    if (glfwWindowShouldClose(data->context)) {
-        printf("Attempting to close\n");
-        stopping = true;
-    }
-    if (stopping) {
-        printf("Closing thread\n");
-        free(data);
-        pthread_exit(NULL);
-    }
+    return 0;
 }
 
-ThreadManager::ThreadManager(GLFWwindow* glfwContext) {
-    context = glfwContext;
+ThreadManager::ThreadManager() {
+
 }
 
 void ThreadManager::StartThreads() {
@@ -48,7 +24,6 @@ void ThreadManager::StartThreads() {
     input_data->mouse_down = false;
     input_data->mouse_was_down = false;
     input_data->currentSample = 0;
-    input_data->context = context;
 
     int errorcode = pthread_create(&thr[0], NULL, input_thread_main, &input_data);
     if (errorcode) fprintf(stderr, "error: pthread_create, rc: %d\n", errorcode);

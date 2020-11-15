@@ -1,44 +1,54 @@
 #include "src/Objects/Art/stroke.h"
 
-int strokesMade = 0;
-
-void BlankStrokeData(stroke_info* stroke, bool doAlloc) {
-    stroke->stroke_id = -1;
-    stroke->numPoints = 0;
-    stroke->visible = true;
-
-    if (doAlloc) { // Uses malloc as it is faster and data is zero'd out after
-        stroke->points = (glm::vec2*) malloc(MAX_STROKE_POINTS * sizeof(glm::vec2));
-        stroke->dir = (glm::vec2*) malloc(MAX_STROKE_POINTS * sizeof(glm::vec2));
-        stroke->thickness = (float*) malloc(MAX_STROKE_POINTS * sizeof(float));
-        stroke->alpha = (float*) malloc(MAX_STROKE_POINTS * sizeof(float));
-        stroke->shaders = (bool*) malloc(NUM_SHADERS_CUSTOM * sizeof(bool));
+// Initialize new stroke object
+Stroke::Stroke() {
+    points = {  // We need a minimum of 2 points to create a stroke
+        new Point(glm::vec2(0, 0)),
+        new Point(glm::vec2(0, 0))
+    };
+}
+// Deallocate stroke object--deallocates contained points and clears the vector
+Stroke::~Stroke() {
+    for (int i = 0; i < length(); i++) {
+        if (points[i]) delete points[i];
     }
 
-    // Zero out data
-    for (int i = 0; i < MAX_STROKE_POINTS; i++) {
-        stroke->points[i] = glm::vec2(0, 0);
-        stroke->dir[i] = glm::vec2(0, 0);
-        stroke->thickness[i] = 0.0f;
-        stroke->alpha[i] = 1.0f;
-    }
-    // Mark all shaders as unused
-    for (int i = 0; i < NUM_SHADERS_CUSTOM; i++) {
-        stroke->shaders[i] = false;
-    }
+    points.clear();
 }
 
-void InitializeStrokeData(stroke_info* stroke, double startX, double startY) {
-    stroke->stroke_id = strokesMade;
-    strokesMade++;
+// Pushes the given point into the point vector
+void Stroke::pushPoint(Point* newPoint) {
+    points.push_back(newPoint);
+}
+// Creates a point at the given position, inheriting properties from the last point in the array, and pushes the point to the point vector
+void Stroke::pushPoint(glm::vec2 pointPosition) {
+    int len = length();
+    Point* newPoint = new Point(pointPosition);
+    Point* lastPoint = points[len-1];
 
-    stroke->numPoints = 1;
-    stroke->points[0] = glm::vec2(startX, startY);
-    // stroke->dir[0] = glm
-    stroke->thickness[0] = 20.0f;
-    // stroke->alpha[0] = 1.0f;
+    // Make left handle halfway between last pos and new pos (auto-smooth)
+    // Could definitely be improved, brush smoothing modes?
+    newPoint->leftHandle = ((lastPoint->pos + lastPoint->rightHandle) + pointPosition) / 2.0f;
+    newPoint->thickness = lastPoint->thickness;
+    newPoint->opacity = lastPoint->opacity;
+    
+    pushPoint(newPoint);
+}
+
+// Returns the number of points in the stroke
+int Stroke::length() {
+    return (int) points.size();
 }
 
 
-// float GetParametricOnStroke(stroke_info* stroke, double x, double y);
-// void GetStrokeInfo(stroke_info* stroke, float parametric);
+// Returns a point from the given parametric
+Point* Stroke::getPoint(float parametric) {
+    float t = parametric * (length() - (!closed)); // Count 1 less index if stroke is not closed (as we won't be performing wrapping)
+    int index = (int) t; // Automatically rounds down to nearest integer
+    int indexPlusOne = index + 1;
+    if (closed && indexPlusOne >= length()) { indexPlusOne = 0; } // Wrap to bottom
+
+    printf("Parametric %f, index %i, indexPlusOne%i\n", t, index, indexPlusOne);
+
+    return POINT_Blend(points[index], points[indexPlusOne], t);
+}

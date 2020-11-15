@@ -8,7 +8,7 @@
 // #define PLATFORM_WINDOWS
 // #define PLATFORM_MACOS
 
-// #define DEBUG         // If enabled, certain developer features and error-catches will be enabled
+#define DEBUG         // If enabled, certain developer features and error-catches will be enabled
 // #define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information
 // #define Enable3D
 
@@ -21,7 +21,7 @@
     #define WindowHeight 800
 
     // Maximum number of CPU threads that can be used
-    #define MAX_THREADS 3
+    #define MAX_THREADS 1
 
 
 /* PIPELINE CONFIG */
@@ -40,4 +40,4 @@
 // Maximum number of brush strokes visible / simulating at a time
 #define MAX_STROKES 20
 // Maximum number of points for a given brush stroke
-#define MAX_STROKE_POINTS 5
+#define EXPECTED_STOKE_POINTS 5

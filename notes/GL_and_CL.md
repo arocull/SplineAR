@@ -28,3 +28,5 @@ And finally, a list of OpenCL [Error Codes](https://streamhpc.com/blog/2013-04-2
 Max O'Cull suggested [pthreads](https://randu.org/tutorials/threads/)
 
 Passing [structs to kernels](https://stackoverflow.com/questions/52009087/passing-c-structures-to-opencl-kernel) in OpenCL
+
+Drawing [non-convex polygons](https://stackoverflow.com/questions/25422846/how-to-force-opengl-to-draw-a-non-convex-filled-polygon) in OpenGL
