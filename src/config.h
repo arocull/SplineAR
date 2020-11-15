@@ -34,7 +34,7 @@
 
 /* INPUT CONFIG */
     // Number of X and Y samples of a stroke input
-    #define MaxInputSamples 1000
+    #define MaxInputSamples 600
 
 // Maximum number of brush strokes visible / simulating at a time
 #define MAX_STROKES 25
