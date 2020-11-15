@@ -37,6 +37,4 @@
     #define MaxInputSamples 1000
 
 // Maximum number of brush strokes visible / simulating at a time
-#define MAX_STROKES 20
-// Maximum number of points for a given brush stroke
-#define EXPECTED_STOKE_POINTS 5
+#define MAX_STROKES 25
