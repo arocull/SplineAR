@@ -10,7 +10,6 @@
 
 #define DEBUG         // If enabled, certain developer features and error-catches will be enabled
 // #define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information
-// #define Enable3D
 
 /* Configuration */
 
