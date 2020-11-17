@@ -8,6 +8,7 @@
 
 #include "src/Program/gpu.h"
 #include "src/Program/gpu_memory.h"
+#include "src/Program/gl_texture_handler.h"
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 
