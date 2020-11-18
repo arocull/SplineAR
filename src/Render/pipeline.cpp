@@ -9,21 +9,10 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
     shaderKernels = (cl_kernel*) calloc(NUM_SHADERS_PRIMARY, sizeof(cl_kernel));
 
     // Build shaders
-    gpu->BuildShaderFromFile(&(shaderPrograms[0]), &(shaderKernels[0]), "src/Render/cl_kernels/draw_strokes.cl", "draw_strokes");
-
+    gpu->BuildShaderFromFile(&(shaderPrograms[0]), &(shaderKernels[0]), "src/Render/cl_kernels/draw_strokes_two.cl", "draw_strokes");
 
     // Generate Canvas Texture and Pipe into OpenCL
-    glGenTextures(1, &canvasGL);
-    glBindTexture(GL_TEXTURE_2D, canvasGL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, WindowWidth, WindowHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
-    glFinish();
-
-    canvasCL = clCreateFromGLTexture(gpu->context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, canvasGL, NULL);
+    canvas = new GLTextureHandler(gpu, WindowWidth, WindowHeight);
 
     #ifdef DEBUG_VERBOSE
         printf("Created and linked canvas texture for OpenGL and OpenCL\n");
@@ -45,31 +34,41 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
 
     // Allocate other CL Memory types
     clTime = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(float), NULL, NULL); // Time tracker for OpenCL shaders
+    clMaxStrokes = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Maximum number of strokes
 
+
+
+    // Allocate memory for strokes data buffers
     // GPU Memory objects automatically allocate themselves on CPU and GPU (initialized on both for conversion)
-    /*
-    strokeData[0] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);  // Stroke IDs
-    strokeData[1] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);  // Num of points in stroke
-    strokeData[2] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z positions of stroke
-    strokeData[3] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float3));  // X, Y and Z directions of stroke
-    strokeData[4] = new GPUMemory(gpu, MAX_STROKES * MAX_STROKE_POINTS, sizeof(cl_float)); // Line thickness at given point
-    */
+    strokeData = (GPUMemory**) calloc(NUM_STROKE_DATA_BUFFERS, sizeof(GPUMemory*));
+
+    strokeData[0] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);  // Number of points in stroke
+    strokeData[1] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_bool), CL_MEM_READ_ONLY); // Stroke closed
+    strokeData[2] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_bool), CL_MEM_READ_ONLY); // Stroke filled
+    strokeData[3] = new GPUMemory(gpu, MAX_STROKES * EXPECTED_STROKE_POINTS, sizeof(cl_float2), CL_MEM_READ_ONLY); // XY positions of points
+    strokeData[4] = new GPUMemory(gpu, MAX_STROKES * EXPECTED_STROKE_POINTS, sizeof(cl_float2), CL_MEM_READ_ONLY); // XY left handles
+    strokeData[5] = new GPUMemory(gpu, MAX_STROKES * EXPECTED_STROKE_POINTS, sizeof(cl_float2), CL_MEM_READ_ONLY); // XY right handles
+    strokeData[6] = new GPUMemory(gpu, MAX_STROKES * EXPECTED_STROKE_POINTS, sizeof(cl_float), CL_MEM_READ_ONLY);  // Point thickness
+
+    
 
     // Set (Default) Kernel Arguements
     for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
-        clSetKernelArg(shaderKernels[i], 0, sizeof(canvasCL), &canvasCL); // Set image to the first arguement of the given Kernel
+        clSetKernelArg(shaderKernels[i], 0, sizeof(canvas->GetCL()), canvas->GetCLReference()); // Set image to the first arguement of the given Kernel
         clSetKernelArg(shaderKernels[i], 1, sizeof(clTime), &clTime);     // Set the time to the second arguement of the given Kernel
+        clSetKernelArg(shaderKernels[i], 2, sizeof(clMaxStrokes), &clMaxStrokes);
     }
     
-    /*for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {   // Set kernel arguements for stroke data
-        clSetKernelArg(shaderKernels[0], 2 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
-    }*/
+
+    for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {   // Set kernel arguements for stroke data
+        clSetKernelArg(shaderKernels[0], 3 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
+    }
 
     //clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
 }
 
 void Pipeline::SetupContext() {
-    glEnable(GL_DEPTH_TEST | GL_BLEND);
+    glEnable(GL_BLEND); // | GL_DEPTH_TEST (disabled unless we want to do 3D)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);    // Allow image to transparent and blend
     glDepthFunc(GL_FRONT);
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); // Set color before an image for color multiplication
@@ -88,12 +87,16 @@ void Pipeline::Close() {
     clReleaseSampler(uvSampler);
     clReleaseMemObject(clTime);
 
-    /*for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
-        strokeData[i]->FreeMemory();
-    }*/
+    for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
+        if (strokeData[i]) {
+            strokeData[i]->FreeMemory();
+            free(strokeData[i]);
+            strokeData[i] = nullptr;
+        }
+    }
+    free(strokeData);
 
-    clReleaseMemObject(canvasCL);
-    glDeleteTextures(1, &canvasGL);
+    canvas->Free();
 
     for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
         clReleaseKernel(shaderKernels[i]);
@@ -122,7 +125,7 @@ void Pipeline::RunPipeline(float DeltaTime, Stroke** strokes) {
 void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
     // Set up GL projection matrix
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClearDepth(10.0f);
+    // glClearDepth(10.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     double windowAspect = width / height;
@@ -135,34 +138,44 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
 
 
     // Start updating memory and piping stroke info into OpenCL (requires data conversion)--potentially call read-lock here?
-    // gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
+    gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
+    gpu->WriteMemory(clMaxStrokes, &maxStrokes, sizeof(int)); // Updates CL max strokes (incase of rescaling)
+
+    {  // Pre-cast arrays so they do not need to be casted repeatedly, section off to avoid variable confusion, and convert stroke data to be meaningful on GPU
+        cl_int* numPoints =         ((cl_int*) (strokeData[0]->GetData()));
+        cl_bool* closed =           ((cl_bool*) (strokeData[1]->GetData()));
+        cl_bool* filled =           ((cl_bool*) (strokeData[2]->GetData()));
+        cl_float2* positions =      ((cl_float2*) (strokeData[3]->GetData()));
+        cl_float2* leftHandles =    ((cl_float2*) (strokeData[4]->GetData()));
+        cl_float2* rightHandles =   ((cl_float2*) (strokeData[5]->GetData()));
+        cl_float* thickness =       ((cl_float*) (strokeData[6]->GetData()));
+
+        for (int i = 0, pointIndex = 0; i < maxStrokes; i++) {
+            if (strokes[i]) {
+                numPoints[i] = strokes[i]->length();
+                closed[i] = strokes[i]->closed;
+                filled[i] = strokes[i]->filled;
 
 
-    /*{  // Pre-cast arrays so they do not need to be casted repeatedly, section off to avoid variable confusion, and convert stroke data to be meaningful on GPU
-        cl_int* strokeIDs = ((cl_int*) (strokeData[0]->GetData()));
-        cl_int* numPoints = ((cl_int*) (strokeData[1]->GetData()));
-        cl_float2* positions = ((cl_float3*) (strokeData[2]->GetData()));
-        cl_float2* directions = ((cl_float3*) (strokeData[3]->GetData()));
-        cl_float* thickness = ((cl_float*) (strokeData[4]->GetData()));
+                for (int j = 0; j < strokes[i]->length(); pointIndex++, j++) {
+                    positions[pointIndex] = cl_float2();
+                    positions[pointIndex].x = strokes[i]->points[j]->pos.x;
+                    positions[pointIndex].y = strokes[i]->points[j]->pos.y;
 
-        for (int i = 0; i < MAX_STROKES; i++) {
-            if (!strokes[i].visible) { // If the stroke is not visible, set GPU version as inactive and do not bother updating info
-                strokes[i].stroke_id = -1;
-                continue;
-            } else strokeIDs[i] = strokes[i].stroke_id;    // Cast data to int and then fill
-            numPoints[i] = strokes[i].numPoints;
+                    leftHandles[pointIndex] = cl_float2();
+                    leftHandles[pointIndex].x = strokes[i]->points[j]->leftHandle.x;
+                    leftHandles[pointIndex].y = strokes[i]->points[j]->leftHandle.y;
 
-            for (int j = 0; j < MAX_STROKE_POINTS; j++) {
-                int index = MAX_STROKE_POINTS * i + j;
-                positions[index] = cl_float3();
-                positions[index].x = strokes[i].points[j].x;
-                positions[index].y = WindowHeight - strokes[i].points[j].y;
+                    rightHandles[pointIndex] = cl_float2();
+                    rightHandles[pointIndex].x = strokes[i]->points[j]->rightHandle.x;
+                    rightHandles[pointIndex].y = strokes[i]->points[j]->rightHandle.y;
 
-                directions[index] = cl_float3();
-                directions[index].x = strokes[i].dir[j].x;
-                directions[index].y = -strokes[i].dir[j].y;
-
-                thickness[index] = strokes[i].thickness[j];
+                    thickness[pointIndex] = strokes[i]->points[j]->thickness;
+                }
+            } else { // Ensure we don't try and draw unset points
+                numPoints[i] = -1;
+                closed[i] = false;
+                filled[i] = false;
             }
         }
     }
@@ -170,50 +183,42 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
     // Then copy generated data into GPU
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
         strokeData[i]->CopyDataToGPU();
-    }*/
+    }
 
 
     glFinish(); // Finish OpenGL queue before allowing OpenCL to grasp GL objects
 }
 void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
     // Fetch OpenGL objects for use in OpenCL
-    // clEnqueueAcquireGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
+    canvas->HoldCLTexture(gpu);
 
     // Perform remaining memory updates
 
     // Run shaders
-    // size_t work_size[] = {(size_t) width, (size_t) height};
-    // for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
-    //     clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
-    // }
+    size_t work_size[] = {(size_t) width, (size_t) height};
+    for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
+        clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
+    }
 
     // Finish OpenCL to allow OpenGL to have control of objects again
-    // clFinish(gpu->queue);
+    clFinish(gpu->queue);
 
     // Release hold of OpenGL objects
-    // clEnqueueReleaseGLObjects(gpu->queue, 1, &canvasCL, 0, 0, NULL);
+    canvas->ReleaseCLTexture(gpu);
 
     // Draw updated Canvas texture
-    // glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    // glEnable(GL_TEXTURE_2D);
-    // glDisable(GL_DEPTH_TEST);
-    // glBindTexture(GL_TEXTURE_2D, canvasGL); // Bind OpenGL rendering texture to the GL canvas
-    // glBegin(GL_QUADS);
-    // glTexCoord2i(0, 0); glVertex2i(0, 0);   // Set UV and draw coordinates
-    // glTexCoord2i(0, 1); glVertex2i(0, 1);
-    // glTexCoord2i(1, 1); glVertex2i(1, 1);
-    // glTexCoord2i(1, 0); glVertex2i(1, 0);
-    // glEnd();
-    // glDisable(GL_TEXTURE_2D);
-    // glBindTexture(GL_TEXTURE_2D, 0); // Texture is unset
+    canvas->BindGLTexture();
+    canvas->DrawGLTexture();
+    canvas->UnbindGLTexture();
 
     // Draw strokes ontop of texture
-    // glEnable(GL_DEPTH_TEST);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     for (int i = 0; i < MAX_STROKES; i++) {
         Stroke* stroke = strokes[i];
         if (stroke && stroke->visible) {
-            printf("\tBeginning GL polygon of stroke %i\n", i);
+            #ifdef DEBUG_VERBOSE
+                printf("\tBeginning GL polygon of stroke %i\n", i);
+            #endif
             int strokeLen = stroke->length();
 
             if (stroke->closed && strokeLen > 2) {   // Only fill the shape if it is closed

@@ -29,7 +29,8 @@ class Stroke {
         
         // Shape info
         bool closed = false;        // If true, data from the last point will wrap back to the first point
-        bool visible = true;       // Should the stroke be displayed?
+        bool filled = true;         // If true, the stroke should be filled (if it is closed)
+        bool visible = true;        // Should the stroke be displayed?
 
     private:
 

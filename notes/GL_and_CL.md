@@ -9,6 +9,8 @@ A quick test I wrote that combines OpenCL and SDL located [here](https://gist.gi
 
 Old NVidia [OpenCL Demos](https://developer.nvidia.com/opencl) (not Linux-compatible)
 
+A list of [math functions](https://www.khronos.org/registry/OpenCL/specs/2.2/html/OpenCL_C.html#math-functions) for OpenCL
+
 
 ## Interoperability between OpenGL and OpenCL
 Basic 2-Directional Texture Manipulation [Gist by Twinklebear](https://gist.github.com/Twinklebear/5393665)

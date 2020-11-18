@@ -20,10 +20,10 @@ class Pipeline {
         GPU* gpu;
         GLFWwindow* window;
 
-        GLuint canvasGL;
-        cl_mem canvasCL;
+        GLTextureHandler* canvas;
         cl_sampler uvSampler;
         cl_mem clTime;
+        cl_mem clMaxStrokes;
 
         cl_program* shaderPrograms;
         cl_kernel* shaderKernels;
@@ -32,8 +32,9 @@ class Pipeline {
         bool canRunPipeline = true;
 
         float time = 0.0f;
+        int maxStrokes = MAX_STROKES;
 
-        // GPUMemory* strokeData[NUM_STROKE_DATA_BUFFERS];
+        GPUMemory** strokeData;
 
     public:
         // Performs basic setup for GLFW window

@@ -24,5 +24,9 @@ class GLTextureHandler {
         void HoldCLTexture(GPU* gpu);
         void ReleaseCLTexture(GPU* gpu);
 
+        GLuint GetGL();
+        cl_mem GetCL();
+        cl_mem* GetCLReference();
+
         void Free();
 };

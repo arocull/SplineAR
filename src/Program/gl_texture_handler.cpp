@@ -58,17 +58,35 @@ void GLTextureHandler::DrawGLTexture() {
     glEnd();
 }
 
+
+// Gives the texture to OpenCL for processing
 void GLTextureHandler::HoldCLTexture(GPU* gpu) {
     inCLUse = true;
     clEnqueueAcquireGLObjects(gpu->queue, 1, &clTexture, 0, 0, NULL);
     
 }
+// Makes OpenCL release its hold on the image (returning it for OpenGL use)
 void GLTextureHandler::ReleaseCLTexture(GPU* gpu) {
     clEnqueueReleaseGLObjects(gpu->queue, 1, &clTexture, 0, 0, NULL);
     inCLUse = false;
 }
 
 
+// Get the GL texture object ID
+GLuint GLTextureHandler::GetGL() {
+    return glTexture;
+}
+// Get the CL texture memory block
+cl_mem GLTextureHandler::GetCL() {
+    return clTexture;
+}
+// Get a reference to the CL texture memory block for parameterization
+cl_mem* GLTextureHandler::GetCLReference() {
+    return &clTexture;
+}
+
+
+// Frees the texture in both OpenGL and OpenCL
 void GLTextureHandler::Free() {
     clReleaseMemObject(clTexture);
     glDeleteTextures(1, &glTexture);

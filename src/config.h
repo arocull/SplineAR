@@ -30,14 +30,11 @@
     #define NUM_SHADERS_CUSTOM 5
 
     // Number of memory objects used for processing info on brush strokes within the graphics pipeline (used for memory allocation and array iteration)
-    #define NUM_STROKE_DATA_BUFFERS 5
+    #define NUM_STROKE_DATA_BUFFERS 7
 
 
 /* INPUT CONFIG */
-    // Number of X and Y samples of a stroke input
-    #define MaxInputSamples 1000
+    #define MaxInputSamples 1000 // Number of X and Y samples of a stroke input
 
-// Maximum number of brush strokes visible / simulating at a time
-#define MAX_STROKES 20
-// Maximum number of points for a given brush stroke
-#define EXPECTED_STOKE_POINTS 5
+#define MAX_STROKES 20 // Maximum number of brush strokes visible / simulating at a time
+#define EXPECTED_STROKE_POINTS 30 // Base, expected number of stroke points for base GPU memory allocation--lean a bit higher for this
