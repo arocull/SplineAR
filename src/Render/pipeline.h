@@ -24,6 +24,8 @@ class Pipeline {
         cl_sampler uvSampler;
         cl_mem clTime;
         cl_mem clMaxStrokes;
+        cl_mem clMEM_WindowWidth; 
+        cl_mem clMEM_WindowHeight;
 
         cl_program* shaderPrograms;
         cl_kernel* shaderKernels;

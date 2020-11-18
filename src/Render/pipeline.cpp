@@ -35,7 +35,8 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
     // Allocate other CL Memory types
     clTime = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(float), NULL, NULL); // Time tracker for OpenCL shaders
     clMaxStrokes = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Maximum number of strokes
-
+    clMEM_WindowWidth = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Horizontal width of the window in pixels
+    clMEM_WindowHeight = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Vertical height of the window in pixels
 
 
     // Allocate memory for strokes data buffers
@@ -57,11 +58,13 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
         clSetKernelArg(shaderKernels[i], 0, sizeof(canvas->GetCL()), canvas->GetCLReference()); // Set image to the first arguement of the given Kernel
         clSetKernelArg(shaderKernels[i], 1, sizeof(clTime), &clTime);     // Set the time to the second arguement of the given Kernel
         clSetKernelArg(shaderKernels[i], 2, sizeof(clMaxStrokes), &clMaxStrokes);
+        clSetKernelArg(shaderKernels[i], 3, sizeof(clMEM_WindowWidth), &clMEM_WindowWidth);
+        clSetKernelArg(shaderKernels[i], 4, sizeof(clMEM_WindowHeight), &clMEM_WindowHeight);
     }
     
 
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {   // Set kernel arguements for stroke data
-        clSetKernelArg(shaderKernels[0], 3 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
+        clSetKernelArg(shaderKernels[0], 5 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
     }
 
     //clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
@@ -86,6 +89,9 @@ void Pipeline::Close() {
 
     clReleaseSampler(uvSampler);
     clReleaseMemObject(clTime);
+    clReleaseMemObject(clMaxStrokes);
+    clReleaseMemObject(clMEM_WindowWidth);
+    clReleaseMemObject(clMEM_WindowHeight);
 
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
         if (strokeData[i]) {
@@ -140,6 +146,8 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
     // Start updating memory and piping stroke info into OpenCL (requires data conversion)--potentially call read-lock here?
     gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
     gpu->WriteMemory(clMaxStrokes, &maxStrokes, sizeof(int)); // Updates CL max strokes (incase of rescaling)
+    gpu->WriteMemory(clMEM_WindowWidth, &width, sizeof(int)); // Updates CL window width
+    gpu->WriteMemory(clMEM_WindowHeight, &height, sizeof(int)); // Updates CL window height
 
     {  // Pre-cast arrays so they do not need to be casted repeatedly, section off to avoid variable confusion, and convert stroke data to be meaningful on GPU
         cl_int* numPoints =         ((cl_int*) (strokeData[0]->GetData()));

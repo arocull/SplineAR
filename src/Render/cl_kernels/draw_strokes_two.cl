@@ -2,7 +2,9 @@
 kernel void draw_strokes(
     write_only image2d_t texture, // Canvas texture
     global float* time,           // Current time
-    global int* maxStrokes,
+    global int* maxStrokes,       // Maximum number of strokes that can be drawn (for indexing)
+    global int* windowWidth,      // Width of viewport in pixels
+    global int* windowHeight,     // Height of viewport in pixels
     global int* stroke_points,    // Number of points on the stroke
     global bool* closed,          // Is the stroke closed?
     global bool* filled,          // Is the stroke filled?
@@ -20,7 +22,7 @@ kernel void draw_strokes(
         if (stroke_points[strokeIndex] <= 0) continue; // If there are no points to draw, don't attempt to draw them
 
         for (; pointIndex < (lastPointIndex + stroke_points[strokeIndex]); pointIndex++) {
-            float2 pos = position[pointIndex];
+            float2 pos = position[pointIndex] * (float2)(*windowWidth, *windowHeight);
             float dist = sqrt(pown(pos.x - x, 2) + pown(pos.y - y, 2));
             // Test if point is within range
             if (dist <= thickness[pointIndex]) {
@@ -28,7 +30,7 @@ kernel void draw_strokes(
                 break;
             }
         }
-        lastPointIndex = pointIndex;
+        lastPointIndex = lastPointIndex + stroke_points[strokeIndex]; // We shouldn't iterate through any points of the previous stroke now
     }
     
     write_imagef(texture, (int2)(x, y), color);
