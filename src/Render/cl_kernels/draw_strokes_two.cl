@@ -21,16 +21,29 @@ kernel void draw_strokes(
     for (int strokeIndex = 0, pointIndex = 0, lastPointIndex = 0; strokeIndex < (*maxStrokes); strokeIndex++) {
         if (stroke_points[strokeIndex] <= 0) continue; // If there are no points to draw, don't attempt to draw them
 
-        for (; pointIndex < (lastPointIndex + stroke_points[strokeIndex]); pointIndex++) {
-            float2 pos = position[pointIndex] * (float2)(*windowWidth, *windowHeight);
-            float dist = sqrt(pown(pos.x - x, 2) + pown(pos.y - y, 2));
+        int maxIndex = lastPointIndex + stroke_points[strokeIndex];
+
+        for (; pointIndex <= maxIndex; pointIndex++) {
+            int nextIndex = pointIndex + 1;
+            if (nextIndex == maxIndex) {
+                if (closed[strokeIndex]) { // Accept the max index if it is a closed shape
+                    nextIndex = lastPointIndex; // Set next index to first point
+                } else continue; // Otherwise skip over it and continue
+            }
+
+            float tx = (float) (x - position[pointIndex].x * (*windowWidth)) / (float) (position[nextIndex].x * (*windowWidth) - position[pointIndex].x * (*windowWidth));
+            float ty = (float) (y - position[pointIndex].y * (*windowHeight)) / (float) (position[nextIndex].y * (*windowHeight) - position[pointIndex].y * (*windowHeight));
+
+
+            // float dist = sqrt(pown(pos.x - x, 2) + pown(pos.y - y, 2));
             // Test if point is within range
-            if (dist <= thickness[pointIndex]) {
+            //if (abs(abs(tx) - abs(ty)) < (thickness[pointIndex] / 2.0f)) {
+            if (tx < thickness[pointIndex]) {
                 color = (float4)(0.0f, 1.0f, 0.0f, 1.0f);
                 break;
             }
         }
-        lastPointIndex = lastPointIndex + stroke_points[strokeIndex]; // We shouldn't iterate through any points of the previous stroke now
+        lastPointIndex = maxIndex; // We shouldn't iterate through any points of the previous stroke now
     }
     
     write_imagef(texture, (int2)(x, y), color);
