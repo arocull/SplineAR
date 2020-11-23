@@ -20,9 +20,10 @@ Stroke* InputManager::tickInput() {
     glfwGetCursorPos(context, &mouseX, &mouseY);
     glfwGetWindowSize(context, &windowWidth, &windowHeight);
 
-    mouseX /= windowWidth;
-    mouseY /= windowHeight;
-    mouseY = 1.0 - mouseY;
+    //mouseX /= windowWidth;
+    //mouseY /= windowHeight;
+    //mouseY = 1.0 - mouseY;
+    mouseY = windowHeight - mouseY; // Invert mouse height
 
     if (glfwGetMouseButton(context, GLFW_MOUSE_BUTTON_LEFT) == GLFW_TRUE) {
         if (!mouseWasDown) { // If this is the start of a click, go ahead and create a stroke

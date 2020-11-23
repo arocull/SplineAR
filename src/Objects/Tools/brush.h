@@ -20,8 +20,8 @@ class Brush {
 
         // Brush Settings //
         float thickness = 25.0f;
-        float autocloseGap = 0.075f;
-        float maxPointGap = 0.05f;
+        float autocloseGap = 30.0f; // Maximum distance (in pixels?) between cursor and starting point to auto-close the curve 
+        float maxPointGap = 100.0f; // Maximum distance (in pixels) before a new point is created for the given line
 
     public:
         Stroke* startStroke(double x, double y);

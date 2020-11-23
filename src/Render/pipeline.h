@@ -23,7 +23,8 @@ class Pipeline {
         GLTextureHandler* canvas;
         cl_sampler uvSampler;
         cl_mem clTime;
-        cl_mem clMaxStrokes;
+        cl_mem clMEM_MaxStrokes;
+        cl_mem clMEM_MaxPoints;
         cl_mem clMEM_WindowWidth; 
         cl_mem clMEM_WindowHeight;
 
@@ -34,7 +35,8 @@ class Pipeline {
         bool canRunPipeline = true;
 
         float time = 0.0f;
-        int maxStrokes = MAX_STROKES;
+        int maxStrokes = MAX_STROKES;   // Maximum number of drawable strokes
+        int maxPoints = 0;              // Maximum number of points
 
         GPUMemory** strokeData;
 

@@ -2,6 +2,7 @@
 
 #include "src/config.h"
 
+#include <string.h>
 #include <CL/cl.h>
 
 #include "src/Program/gpu.h"
@@ -56,7 +57,7 @@ class GPUMemory {
         // - Then deallocates both CPU and GPU arrays
         // - Finally allocates new GPU array, and if 'doCopy' is true it then copies CPU buffer onto GPU buffer
         // Returns true if reallocation was successful
-        bool Reallocate(int newSize, bool doCopy = false);
+        bool Reallocate(int newSize, bool doCopy = true, bool doGPUCopy = false);
 
         // Deallocates the memory, and if in debug mode, disables copy and fetch functions
         void FreeMemory();

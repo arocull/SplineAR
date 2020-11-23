@@ -34,3 +34,7 @@ Passing [structs to kernels](https://stackoverflow.com/questions/52009087/passin
 Drawing [non-convex polygons](https://stackoverflow.com/questions/25422846/how-to-force-opengl-to-draw-a-non-convex-filled-polygon) in OpenGL
 
 Textures in OpenGL [here](https://learnopengl.com/Getting-started/Textures)
+
+Invoking [multiple functions](https://stackoverflow.com/questions/7196552/opencl-is-it-possible-to-invoke-another-function-from-within-a-kernel) within an OpenCL Kernel.
+
+Including other CL Kernels in a [CL header](https://stackoverflow.com/questions/30514189/how-to-include-header-correctly-in-the-opencl-kernel).

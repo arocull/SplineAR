@@ -34,7 +34,8 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
 
     // Allocate other CL Memory types
     clTime = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(float), NULL, NULL); // Time tracker for OpenCL shaders
-    clMaxStrokes = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Maximum number of strokes
+    clMEM_MaxStrokes = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Maximum number of strokes
+    clMEM_MaxPoints = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Maximum number of strokes
     clMEM_WindowWidth = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Horizontal width of the window in pixels
     clMEM_WindowHeight = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Vertical height of the window in pixels
 
@@ -57,14 +58,15 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
     for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
         clSetKernelArg(shaderKernels[i], 0, sizeof(canvas->GetCL()), canvas->GetCLReference()); // Set image to the first arguement of the given Kernel
         clSetKernelArg(shaderKernels[i], 1, sizeof(clTime), &clTime);     // Set the time to the second arguement of the given Kernel
-        clSetKernelArg(shaderKernels[i], 2, sizeof(clMaxStrokes), &clMaxStrokes);
-        clSetKernelArg(shaderKernels[i], 3, sizeof(clMEM_WindowWidth), &clMEM_WindowWidth);
-        clSetKernelArg(shaderKernels[i], 4, sizeof(clMEM_WindowHeight), &clMEM_WindowHeight);
+        clSetKernelArg(shaderKernels[i], 2, sizeof(clMEM_MaxStrokes), &clMEM_MaxStrokes);
+        clSetKernelArg(shaderKernels[i], 3, sizeof(clMEM_MaxPoints), &clMEM_MaxPoints);
+        clSetKernelArg(shaderKernels[i], 4, sizeof(clMEM_WindowWidth), &clMEM_WindowWidth);
+        clSetKernelArg(shaderKernels[i], 5, sizeof(clMEM_WindowHeight), &clMEM_WindowHeight);
     }
     
 
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {   // Set kernel arguements for stroke data
-        clSetKernelArg(shaderKernels[0], 5 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
+        clSetKernelArg(shaderKernels[0], 6 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
     }
 
     //clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
@@ -89,7 +91,8 @@ void Pipeline::Close() {
 
     clReleaseSampler(uvSampler);
     clReleaseMemObject(clTime);
-    clReleaseMemObject(clMaxStrokes);
+    clReleaseMemObject(clMEM_MaxStrokes);
+    clReleaseMemObject(clMEM_MaxPoints);
     clReleaseMemObject(clMEM_WindowWidth);
     clReleaseMemObject(clMEM_WindowHeight);
 
@@ -145,7 +148,8 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
 
     // Start updating memory and piping stroke info into OpenCL (requires data conversion)--potentially call read-lock here?
     gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
-    gpu->WriteMemory(clMaxStrokes, &maxStrokes, sizeof(int)); // Updates CL max strokes (incase of rescaling)
+    gpu->WriteMemory(clMEM_MaxStrokes, &maxStrokes, sizeof(int)); // Updates CL max strokes (incase of rescaling)
+    gpu->WriteMemory(clMEM_MaxPoints, &maxPoints, sizeof(int)); // Updates CL max points
     gpu->WriteMemory(clMEM_WindowWidth, &width, sizeof(int)); // Updates CL window width
     gpu->WriteMemory(clMEM_WindowHeight, &height, sizeof(int)); // Updates CL window height
 
@@ -158,12 +162,28 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
         cl_float2* rightHandles =   ((cl_float2*) (strokeData[5]->GetData()));
         cl_float* thickness =       ((cl_float*) (strokeData[6]->GetData()));
 
+        maxPoints = 0;
         for (int i = 0, pointIndex = 0; i < maxStrokes; i++) {
             if (strokes[i]) {
                 numPoints[i] = strokes[i]->length();
                 closed[i] = strokes[i]->closed;
                 filled[i] = strokes[i]->filled;
 
+                maxPoints += numPoints[i];
+                if (maxPoints > strokeData[3]->GetMaxAmount()) { // If the number of points is greater than currently allocated, reallocate arrays
+                    strokeData[3]->Reallocate(maxPoints * 1.4);
+                    strokeData[4]->Reallocate(maxPoints * 1.4);
+                    strokeData[5]->Reallocate(maxPoints * 1.4);
+                    strokeData[6]->Reallocate(maxPoints * 1.4);
+
+                    // Re-cast new blocks of memory
+                    positions =      ((cl_float2*) (strokeData[3]->GetData()));
+                    leftHandles =    ((cl_float2*) (strokeData[4]->GetData()));
+                    rightHandles =   ((cl_float2*) (strokeData[5]->GetData()));
+                    thickness =      ((cl_float*) (strokeData[6]->GetData()));
+
+                    printf("Reallocated stroke data to account for new max points %i (from %i)\n", strokeData[3]->GetMaxAmount(), maxPoints);
+                }
 
                 for (int j = 0; j < strokes[i]->length(); pointIndex++, j++) {
                     positions[pointIndex] = cl_float2();

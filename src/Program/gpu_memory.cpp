@@ -57,7 +57,7 @@ void GPUMemory::CopyDataFromGPU(bool blockingWrite) {
 }
 
 
-bool GPUMemory::Reallocate(int newSize, bool doCopy) {
+bool GPUMemory::Reallocate(int newSize, bool doCopy, bool doGPUCopy) {
     #ifdef DEBUG
     if (freed) { // Do not attempt to interact with GPU or write to CPU if memory has already been freed
         perror("ERROR: Attempted to reallocate GPU memory block even though it has already been freed!\n");
@@ -70,7 +70,7 @@ bool GPUMemory::Reallocate(int newSize, bool doCopy) {
     void* newMem = malloc(item_size * newSize);
     if (newMem) {
 
-        if (doCopy) { // Copy data from GPU to the new memory
+        if (doGPUCopy) { // Copy data from GPU to the new memory
             cl_int code = clEnqueueReadBuffer(gpu->queue, gpuMemory, true, 0, mem_size, newMem, 0, NULL, NULL);
             if (code != CL_SUCCESS) {
                 perror("Failed to copy data from GPU in memory block reallocation:\n");
@@ -78,6 +78,9 @@ bool GPUMemory::Reallocate(int newSize, bool doCopy) {
                 free(newMem); // Free new memory to prevent memory leak
                 return false;
             }
+        } else if (doCopy) {
+            // Copy current memory to new memory array
+            memcpy(newMem, memory, mem_size);
         }
 
         FreeMemory(); // Free old memory
@@ -92,7 +95,7 @@ bool GPUMemory::Reallocate(int newSize, bool doCopy) {
             freed = false;
         #endif
 
-        if (doCopy) {
+        if (doGPUCopy) {
             CopyDataToGPU(true);
         }
 
