@@ -220,7 +220,7 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
     canvas->UnbindGLTexture();
 
     // Draw strokes ontop of texture
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    /*glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     for (int i = 0; i < MAX_STROKES; i++) {
         Stroke* stroke = strokes[i];
         if (stroke && stroke->visible) {
@@ -258,7 +258,7 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
                 glEnd();
             }
         }
-    }
+    }*/
 
     // Do not need to finish or flush GL thanks to buffer swap
 }

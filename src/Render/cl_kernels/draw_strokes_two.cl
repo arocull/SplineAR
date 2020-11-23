@@ -16,7 +16,7 @@ kernel void draw_strokes(
     int x = get_global_id(0);
     int y = get_global_id(1);
 
-    float4 color = (float4)(0.5f, 0.5f, 0.5f, 0.0f); // Default background color
+    float4 color = (float4)(0.5f, 0.5f, 0.5f, 1.0f); // Default background color
 
     for (int strokeIndex = 0, pointIndex = 0, lastPointIndex = 0; strokeIndex < (*maxStrokes); strokeIndex++) {
         if (stroke_points[strokeIndex] <= 0) continue; // If there are no points to draw, don't attempt to draw them
@@ -31,16 +31,27 @@ kernel void draw_strokes(
                 } else continue; // Otherwise skip over it and continue
             }
 
+            // Approximate the parametric position
             float tx = (float) (x - position[pointIndex].x * (*windowWidth)) / (float) (position[nextIndex].x * (*windowWidth) - position[pointIndex].x * (*windowWidth));
             float ty = (float) (y - position[pointIndex].y * (*windowHeight)) / (float) (position[nextIndex].y * (*windowHeight) - position[pointIndex].y * (*windowHeight));
 
 
-            // float dist = sqrt(pown(pos.x - x, 2) + pown(pos.y - y, 2));
-            // Test if point is within range
-            //if (abs(abs(tx) - abs(ty)) < (thickness[pointIndex] / 2.0f)) {
-            if (tx < thickness[pointIndex]) {
-                color = (float4)(0.0f, 1.0f, 0.0f, 1.0f);
-                break;
+            float t = (tx + ty) / 2.0f; // Estimated T position
+            float tThickness = ((1.0f - t)*thickness[pointIndex] + t*thickness[nextIndex]) / 10.0f; // Line thickness at this T value
+
+            // Make sure X and Y parametric calculations are not too far from each other
+            // Clip anything that is not close to the lines, though allow stuff that is probably in range of thickness
+            if (fabs(tx - ty) < 0.1f) { // thickness[pointIndex]
+                t = clamp(t, 0.0f, 1.0f); // Clamp T so we do not draw anything past the edges of the line
+                float dist = distance( // If they passed the initial test, do a more accurate look
+                    (float2)((float) x, (float) y),
+                    ((1.0f - t) * position[pointIndex] + t * position[nextIndex]) * (float2)((float) *windowWidth, (float) *windowHeight)
+                );
+                
+                if (dist < 5) {
+                    color = (float4)(dist / tThickness, 0, 0.0f, 1.0f);
+                    break; // Don't try to draw any more points on this line
+                }
             }
         }
         lastPointIndex = maxIndex; // We shouldn't iterate through any points of the previous stroke now
