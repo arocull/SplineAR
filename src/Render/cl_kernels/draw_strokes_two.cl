@@ -7,8 +7,8 @@ kernel void draw_strokes(
     global int* windowWidth,      // Width of viewport in pixels
     global int* windowHeight,     // Height of viewport in pixels
     global int* stroke_points,    // Number of points in the stroke
-    global bool* closed,          // Is the stroke closed?
-    global bool* filled,          // Is the stroke filled?
+    global char* closed,          // Is the stroke closed?
+    global char* filled,          // Is the stroke filled?
     global float2* position,      // Positions of stroke points
     global float2* leftHandle,    // Left handle of stroke point
     global float2* rightHandle,   // Right handle of stroke points
@@ -20,19 +20,20 @@ kernel void draw_strokes(
 
     float4 color = (float4)(0.5f, 0.5f, 0.5f, 1.0f); // Default background color
 
+    bool drawn = false; // Set to true once this pixel is fully opaque
+
 
     // Start from front and draw to back
-    for (int strokeIndex = *maxStrokes - 1, lastPointIndex = *maxPoints, pointIndex = 0; strokeIndex >= 0; strokeIndex--) {
+    for (int strokeIndex = *maxStrokes - 1, lastPointIndex = *maxPoints - 1, pointIndex = *maxPoints - 1; strokeIndex >= 0 && !drawn; strokeIndex--) {
         if (stroke_points[strokeIndex] <= 0) continue; // If there are no points to draw, don't attempt to draw them
 
-        int maxIndex = lastPointIndex;
-        pointIndex = lastPointIndex - stroke_points[strokeIndex];
+        int minIndex = lastPointIndex - stroke_points[strokeIndex];
 
-        for (; pointIndex < lastPointIndex; pointIndex++) {
-            int nextIndex = pointIndex + 1;
-            if (nextIndex == lastPointIndex) {
-                if (closed[strokeIndex]) { // Accept the max index if it is a closed shape
-                    nextIndex = lastPointIndex - stroke_points[strokeIndex]; // Set next index to first point
+        for (; pointIndex > minIndex && !drawn; pointIndex--) {
+            int nextIndex = pointIndex - 1;
+            if (nextIndex <= minIndex) {
+                if (closed[strokeIndex] != 0) { // Accept the max index if it is a closed shape
+                    nextIndex = lastPointIndex; // Set next index to first point
                 } else continue; // Otherwise skip over it and continue
             }
 
@@ -46,7 +47,7 @@ kernel void draw_strokes(
             // To alleviate this, we simply treat both estimates as equally-pluasible options
             // We then clamp them, calculate appropiate line thicknesses, and test their calculated position independently
             // If either point falls within the line thickness, it is a valid distance
-            // If we need a single parametric however (i.e. stroke-based shaders), we will simply use the average between tx and ty for our T value
+            // If we need a single parametric however (i.e. stroke-based shaders), we will simply use the closest T value
 
             tx = clamp(tx, 0.0f, 1.0f); // Clamp T so we do not draw anything past the edges of the line
             ty = clamp(ty, 0.0f, 1.0f);
@@ -65,10 +66,20 @@ kernel void draw_strokes(
             );
             
             if (distX < txThickness || distY < tyThickness) {
-                color = (float4)(0, 0, (tx + ty) / 2.0f, 1.0f);
-                break; // Don't try to draw any more points on this line
+                // Pick real parametric
+                float dist = min(distX, distY);
+                float t = 0.0f;
+                if (dist == distX) {
+                    t = tx;
+                } else {
+                    t = ty;
+                }
+
+                color = (float4)((float) closed[strokeIndex], 0, t, 1.0f);
+                drawn = true; // Pixel is fully opaque, no further calculations needed
             }
         }
+
         lastPointIndex -= stroke_points[strokeIndex]; // We shouldn't iterate through any points of the previous stroke now
     }
     

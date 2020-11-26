@@ -45,8 +45,8 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
     strokeData = (GPUMemory**) calloc(NUM_STROKE_DATA_BUFFERS, sizeof(GPUMemory*));
 
     strokeData[0] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_int), CL_MEM_READ_ONLY);  // Number of points in stroke
-    strokeData[1] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_bool), CL_MEM_READ_ONLY); // Stroke closed
-    strokeData[2] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_bool), CL_MEM_READ_ONLY); // Stroke filled
+    strokeData[1] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_char), CL_MEM_READ_ONLY); // Stroke closed--NOTE: WE USE CHARS HERE DUE TO INCONSISTENT BOOL SIZING
+    strokeData[2] = new GPUMemory(gpu, MAX_STROKES, sizeof(cl_char), CL_MEM_READ_ONLY); // Stroke filled--NOTE: WE USE CHARS HERE DUE TO INCONSISTENT BOOL SIZING
     strokeData[3] = new GPUMemory(gpu, MAX_STROKES * EXPECTED_STROKE_POINTS, sizeof(cl_float2), CL_MEM_READ_ONLY); // XY positions of points
     strokeData[4] = new GPUMemory(gpu, MAX_STROKES * EXPECTED_STROKE_POINTS, sizeof(cl_float2), CL_MEM_READ_ONLY); // XY left handles
     strokeData[5] = new GPUMemory(gpu, MAX_STROKES * EXPECTED_STROKE_POINTS, sizeof(cl_float2), CL_MEM_READ_ONLY); // XY right handles
@@ -148,15 +148,13 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
 
     // Start updating memory and piping stroke info into OpenCL (requires data conversion)--potentially call read-lock here?
     gpu->WriteMemory(clTime, &time, sizeof(float)); // Updates CL time to be same as shader
-    gpu->WriteMemory(clMEM_MaxStrokes, &maxStrokes, sizeof(int)); // Updates CL max strokes (incase of rescaling)
-    gpu->WriteMemory(clMEM_MaxPoints, &maxPoints, sizeof(int)); // Updates CL max points
     gpu->WriteMemory(clMEM_WindowWidth, &width, sizeof(int)); // Updates CL window width
     gpu->WriteMemory(clMEM_WindowHeight, &height, sizeof(int)); // Updates CL window height
 
     {  // Pre-cast arrays so they do not need to be casted repeatedly, section off to avoid variable confusion, and convert stroke data to be meaningful on GPU
         cl_int* numPoints =         ((cl_int*) (strokeData[0]->GetData()));
-        cl_bool* closed =           ((cl_bool*) (strokeData[1]->GetData()));
-        cl_bool* filled =           ((cl_bool*) (strokeData[2]->GetData()));
+        cl_char* closed =           ((cl_char*) (strokeData[1]->GetData()));
+        cl_char* filled =           ((cl_char*) (strokeData[2]->GetData()));
         cl_float2* positions =      ((cl_float2*) (strokeData[3]->GetData()));
         cl_float2* leftHandles =    ((cl_float2*) (strokeData[4]->GetData()));
         cl_float2* rightHandles =   ((cl_float2*) (strokeData[5]->GetData()));
@@ -165,11 +163,12 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
         maxPoints = 0;
         for (int i = 0, pointIndex = 0; i < maxStrokes; i++) {
             if (strokes[i]) {
-                numPoints[i] = strokes[i]->length();
-                closed[i] = strokes[i]->closed;
-                filled[i] = strokes[i]->filled;
+                int strokeLen = strokes[i]->length();
+                numPoints[i] = strokeLen;
+                closed[i] = (cl_char) strokes[i]->closed;
+                filled[i] = (cl_char) strokes[i]->filled;
 
-                maxPoints += numPoints[i];
+                maxPoints += strokeLen;
                 if (maxPoints > strokeData[3]->GetMaxAmount()) { // If the number of points is greater than currently allocated, reallocate arrays
                     strokeData[3]->Reallocate(maxPoints * 1.4);
                     strokeData[4]->Reallocate(maxPoints * 1.4);
@@ -185,7 +184,7 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
                     printf("Reallocated stroke data to account for new max points %i (from %i)\n", strokeData[3]->GetMaxAmount(), maxPoints);
                 }
 
-                for (int j = 0; j < strokes[i]->length(); pointIndex++, j++) {
+                for (int j = 0; j < strokeLen; pointIndex++, j++) {
                     positions[pointIndex] = cl_float2();
                     positions[pointIndex].x = strokes[i]->points[j]->pos.x;
                     positions[pointIndex].y = strokes[i]->points[j]->pos.y;
@@ -207,6 +206,10 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
             }
         }
     }
+
+    // Don't update MaxStrokes and MaxPoints until after they are recalculated
+    gpu->WriteMemory(clMEM_MaxStrokes, &maxStrokes, sizeof(int)); // Updates CL max strokes (incase of rescaling)
+    gpu->WriteMemory(clMEM_MaxPoints, &maxPoints, sizeof(int)); // Updates CL max points
 
     // Then copy generated data into GPU
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
