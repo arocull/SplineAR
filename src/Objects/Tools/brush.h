@@ -17,6 +17,7 @@ class Brush {
         glm::vec2* samples;    // Sample of X and Y position
 
         Stroke* stroke = nullptr; // Stroke we're currently drawing to
+        Point* storedPoint = nullptr; // Point we're currently drawing to, stored in case of a closed-preview
 
         // Brush Settings //
         float thickness = 25.0f;

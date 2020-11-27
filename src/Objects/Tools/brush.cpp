@@ -31,6 +31,9 @@ Stroke* Brush::startStroke(double x, double y) {
 void Brush::endStroke() {
     if (!stroke) return;
 
+    stroke->points.shrink_to_fit(); // Remove any excess spots we had
+    if (storedPoint) free(storedPoint);
+
     clearSamples();
 }
 void Brush::sampleStroke(double x, double y) {
@@ -50,8 +53,21 @@ void Brush::sampleStroke(double x, double y) {
 
     // If the stroke is longer than 2 points, detect auto-closing
     if (strokeLen > 2 && glm::length(samples[numSamples] - stroke->points[0]->pos) <= autocloseGap) {
+        if (!stroke->closed) {
+            storedPoint = lastPoint; // Store the current point away
+            stroke->pullPoint(lastPoint); // Pop it from array so it does not appear in visual
+        }
         stroke->closed = true;
+        
+
     } else { // If the cursor pos moves further than autoclose distance, go ahead and disable closing again
+        if (stroke->closed) { // Pull last point out of storage if we are unclosing the last stroke
+            stroke->pushPoint(storedPoint);
+            lastPoint = storedPoint; // Update last point to be our stored point
+            strokeLen++; // Update the stroke length variable since we have a new point
+
+            storedPoint = nullptr; // Set stored point to null pointer so it is not deallocated when stroke ends
+        }
         stroke->closed = false;
 
         // If the distance between the last point and the current point is greater than the maximum point gap, create a new point to control

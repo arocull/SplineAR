@@ -37,6 +37,7 @@ class Stroke {
     public:
         void pushPoint(Point* point);
         void pushPoint(glm::vec2 newPoint);
+        void pullPoint(Point* point);
 
         int length();
 
