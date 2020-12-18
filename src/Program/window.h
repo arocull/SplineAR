@@ -1,6 +1,8 @@
 #pragma once
 
+#include "src/Objects/Enum/enums.h"
 #include <GLFW/glfw3.h>
+#include <string.h>
 
 class PWindow {
     public:
@@ -14,4 +16,5 @@ class PWindow {
 
     public:
         void Resize();
+        void UpdateTitle(char* workspaceName, EWorkMode workMode);
 };

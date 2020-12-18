@@ -21,6 +21,7 @@
 #include "src/Program/thread_manager.h"
 #include "src/Program/input_manager.h"
 
+#include "src/Objects/Workspace/workspace.h"
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 #include "src/Objects/Tools/brush.h"
@@ -30,7 +31,7 @@ int main(int argc, char **argv) {
     // Initialize openGL and PWindow
     if (!glfwInit()) return -1;
 
-    PWindow window = PWindow(WindowWidth, WindowHeight, "OpenCL GL Testing");
+    PWindow window = PWindow(WindowWidth, WindowHeight, "SplineAR");
     if (!window.glWindow) {
         const char** errorMsg;
         int errorCode = glfwGetError(errorMsg);
@@ -52,7 +53,6 @@ int main(int argc, char **argv) {
         printf("OpenGL version %i.%i\n", versionMajor, versionMinor);
     #endif
 
-
     // Initialize OpenCL
     GPU gpu = GPU();
     Pipeline pipeline = Pipeline(&gpu, window.glWindow);
@@ -67,6 +67,10 @@ int main(int argc, char **argv) {
     // Initialize threads
     // ThreadManager threads = ThreadManager(window.glWindow);
     // threads.StartThreads();
+
+    // Create a workspace
+    Workspace* workspace = new Workspace("TestWindow");
+    window.UpdateTitle(workspace->getName(), workspace->getMode());
 
     Stroke** strokes = (Stroke**) calloc(MAX_STROKES, sizeof(Stroke*));
     for (int i = 0; i < MAX_STROKES; i++) {
@@ -119,6 +123,8 @@ int main(int argc, char **argv) {
     }
     printf("Loop ended. Closing program...\n");
 
+    // Close workspace
+    delete workspace;
 
     // Free OpenCL
     pipeline.Close();

@@ -17,3 +17,12 @@ void PWindow::Resize() {
     glfwGetFramebufferSize(glWindow, &width, &height);
     // glViewport(0, 0, width, height);
 }
+void PWindow::UpdateTitle(char* workspaceName, EWorkMode workMode) {
+    char title[64];
+    strcpy(title, "SplineAR - ");
+    strcat(title, workspaceName);
+    strcat(title, " - ");
+    strcat(title, ENUM_WorkMode_GetName(workMode));
+
+    glfwSetWindowTitle(glWindow, title);
+}
