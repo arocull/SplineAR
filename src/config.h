@@ -10,7 +10,6 @@
 
 #define DEBUG         // If enabled, certain developer features and error-catches will be enabled
 // #define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information
-// #define Enable3D
 
 /* Configuration */
 
@@ -34,7 +33,7 @@
 
 
 /* INPUT CONFIG */
-    #define MaxInputSamples 1000 // Number of X and Y samples of a stroke input
+    #define MaxInputSamples 600 // Number of X and Y samples of a stroke input
 
 #define MAX_STROKES 20 // Maximum number of brush strokes visible / simulating at a time
 #define EXPECTED_STROKE_POINTS 12 // Base, expected number of stroke points for base GPU memory allocation--lean a bit higher for this
