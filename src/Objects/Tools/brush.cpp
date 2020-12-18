@@ -91,6 +91,10 @@ void Brush::sampleStroke(double x, double y) {
 bool Brush::inStroke() {
     return !(stroke == nullptr);
 }
+// Returns the current stroke we're drawing to
+Stroke* Brush::getActiveStroke() {
+    return stroke;
+}
 
 
 // Forcibly finishes the current stroke and clears all given samples

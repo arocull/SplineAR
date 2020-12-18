@@ -50,3 +50,7 @@ Stroke* InputManager::tickInput() {
 
     return createdStroke;
 }
+
+void InputManager::forceEndStroke() {
+    if (brush) brush->endStroke();
+}

@@ -15,6 +15,8 @@
 #include <time.h>
 #include <math.h>
 
+#include "src/Objects/Enum/enums.h"
+
 #include "src/Program/window.h"
 #include "src/Program/gpu.h"
 #include "src/Render/pipeline.h"
@@ -72,14 +74,6 @@ int main(int argc, char **argv) {
     Workspace* workspace = new Workspace("TestWindow");
     window.UpdateTitle(workspace->getName(), workspace->getMode());
 
-    Stroke** strokes = (Stroke**) calloc(MAX_STROKES, sizeof(Stroke*));
-    for (int i = 0; i < MAX_STROKES; i++) {
-        strokes[i] = nullptr;
-    }
-
-    Brush* brush = new Brush();
-    inputManager->setBrush(brush);
-
     // Set up clock for delta time fetching
     timespec lastTime;
     timespec currentTime;
@@ -101,25 +95,21 @@ int main(int argc, char **argv) {
         timeRun += DeltaTime;
         frames++;
 
-        Stroke* newStroke = inputManager->tickInput();
+        // Set active drawing brush to the current brush the workspace is using
+        inputManager->setBrush(workspace->getBrush());
+
+        workspace->tick(DeltaTime);
+
+        Stroke* newStroke = inputManager->tickInput(); // Tick stroke input, recieve new stroke if new one was created
         if (newStroke) { // If a stroke was created, go through all strokes and fill the next one with this one
-            bool placed = false;
-            for (int i = 0; i < MAX_STROKES && !placed; i++) {
-                if (!strokes[i]) {
-                    strokes[i] = newStroke;
-                    placed = true;
-                }
-            }
+            bool placed = workspace->addStroke(newStroke);
             if (!placed) { // If we are unable to place the stroke, forcibly end the stroke and delete it
-                brush->endStroke();
+                inputManager->forceEndStroke();
                 delete newStroke;
             }
         }
 
-        pipeline.RunPipeline(DeltaTime, strokes);
-
-        //strokes[0]->points[0]->pos.x = WindowWidth * (1 + cos(timeRun / 2)) / 2;
-        //strokes[0]->points[0]->pos.y = WindowHeight * (1 + sin(timeRun)) / 2;
+        pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw));
     }
     printf("Loop ended. Closing program...\n");
 
@@ -134,13 +124,6 @@ int main(int argc, char **argv) {
 
     window.Close();
     glfwTerminate();
-
-    delete brush;
-
-    for (int i = 0; i < MAX_STROKES; i++) {
-        if (strokes[i]) delete strokes[i];
-    }
-    free(strokes);
 
     printf("\nClosed successfully!\n\tTotal frames was %i with an estimated average FPS of %f\n", frames, frames / timeRun);
 

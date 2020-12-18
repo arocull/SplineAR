@@ -31,6 +31,8 @@
     // Number of memory objects used for processing info on brush strokes within the graphics pipeline (used for memory allocation and array iteration)
     #define NUM_STROKE_DATA_BUFFERS 7
 
+/* WORKSPACE CONFIG */
+    #define NUM_WORK_MODES 3
 
 /* INPUT CONFIG */
     #define MaxInputSamples 600 // Number of X and Y samples of a stroke input

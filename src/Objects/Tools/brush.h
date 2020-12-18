@@ -30,6 +30,7 @@ class Brush {
         void sampleStroke(double x, double y);
 
         bool inStroke();
+        Stroke* getActiveStroke();
 
         void clearSamples();
 };

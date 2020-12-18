@@ -24,4 +24,5 @@ class InputManager {
     public:
         void setBrush(Brush* newBrush);
         Stroke* tickInput();
+        void forceEndStroke();
 };
