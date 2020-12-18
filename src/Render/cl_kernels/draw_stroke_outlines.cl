@@ -1,11 +1,12 @@
-// Fills empty background and overlays strokes ontop of it
+// Draws stroke outlines and records boundaries of the strokes
 kernel void draw_stroke_outlines(
-    write_only image2d_t texture, // Canvas texture
+    write_only image2d_t texture, // Canvas texture, note images can only be read OR write in any given kernel, not both
     global float* time,           // Current time
     global int* maxStrokes,       // Maximum number of strokes that can be drawn (for indexing)
     global int* maxPoints,        // Number of points currently in use
     global int* windowWidth,      // Width of viewport in pixels
     global int* windowHeight,     // Height of viewport in pixels
+    global int* outlineIndices,   // Indices of stroke outline bounds--used for calculating fills
     global int* stroke_points,    // Number of points in the stroke
     global char* closed,          // Is the stroke closed?
     global char* filled,          // Is the stroke filled?
@@ -22,6 +23,7 @@ kernel void draw_stroke_outlines(
 
     bool drawn = false; // Set to true once this pixel is fully opaque
 
+    outlineIndices[x + y * (*windowWidth)] = -1;
 
     // Start from front and draw to back
     for (int strokeIndex = *maxStrokes - 1, lastPointIndex = *maxPoints - 1, pointIndex = *maxPoints - 1; strokeIndex >= 0 && !drawn; strokeIndex--) {
@@ -77,6 +79,7 @@ kernel void draw_stroke_outlines(
 
                 color = (float4)((float) closed[strokeIndex], 0, t, 1.0f);
                 drawn = true; // Pixel is fully opaque, no further calculations needed
+                outlineIndices[x + y * (*windowWidth)] = strokeIndex;
             }
         }
 

@@ -9,7 +9,7 @@
 // #define PLATFORM_MACOS
 
 #define DEBUG         // If enabled, certain developer features and error-catches will be enabled
-// #define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information
+#define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information
 // #define Enable3D
 
 /* Configuration */
@@ -26,7 +26,7 @@
 
 /* PIPELINE CONFIG */
     // Number of primary shaders the grahpics pipeline uses (used for memory allocation and array iteration)
-    #define NUM_SHADERS_PRIMARY 1
+    #define NUM_SHADERS_PRIMARY 2
     #define NUM_SHADERS_CUSTOM 5
 
     // Number of memory objects used for processing info on brush strokes within the graphics pipeline (used for memory allocation and array iteration)

@@ -10,6 +10,7 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
 
     // Build shaders
     gpu->BuildShaderFromFile(&(shaderPrograms[0]), &(shaderKernels[0]), "src/Render/cl_kernels/draw_stroke_outlines.cl", "draw_stroke_outlines");
+    gpu->BuildShaderFromFile(&(shaderPrograms[1]), &(shaderKernels[1]), "src/Render/cl_kernels/fill_strokes.cl", "fill_strokes");
 
     // Generate Canvas Texture and Pipe into OpenCL
     canvas = new GLTextureHandler(gpu, WindowWidth, WindowHeight);
@@ -39,6 +40,17 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
     clMEM_WindowWidth = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Horizontal width of the window in pixels
     clMEM_WindowHeight = clCreateBuffer(gpu->context, CL_MEM_READ_ONLY, sizeof(int), NULL, NULL); // Vertical height of the window in pixels
 
+    // Store a 2D array of the indices of various stroke outlines
+    // - This can be used later on to calculate fills
+    // - Only used on GPU, should only need to be copied once
+    strokeOutlineIndices = new GPUMemory(gpu, WindowWidth * WindowHeight, sizeof(cl_int), CL_MEM_READ_WRITE);
+    int* outlineIndices = (int*) strokeOutlineIndices->GetData(); // Cast void* to int* so we can write to it
+    for (int i = 0; i < WindowWidth * WindowHeight; i++) { // Iterate through every single pixel
+        outlineIndices[i] = 0;
+    }
+    strokeOutlineIndices->CopyDataToGPU(); // Copy blank slate to GPU for initialization
+    printf("Done blanking Stroke Outline Data\n");
+
 
     // Allocate memory for strokes data buffers
     // GPU Memory objects automatically allocate themselves on CPU and GPU (initialized on both for conversion)
@@ -54,22 +66,38 @@ Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
 
     
 
-    // Set (Default) Kernel Arguements
-    for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
-        clSetKernelArg(shaderKernels[i], 0, sizeof(canvas->GetCL()), canvas->GetCLReference()); // Set image to the first arguement of the given Kernel
-        clSetKernelArg(shaderKernels[i], 1, sizeof(clTime), &clTime);     // Set the time to the second arguement of the given Kernel
-        clSetKernelArg(shaderKernels[i], 2, sizeof(clMEM_MaxStrokes), &clMEM_MaxStrokes);
-        clSetKernelArg(shaderKernels[i], 3, sizeof(clMEM_MaxPoints), &clMEM_MaxPoints);
-        clSetKernelArg(shaderKernels[i], 4, sizeof(clMEM_WindowWidth), &clMEM_WindowWidth);
-        clSetKernelArg(shaderKernels[i], 5, sizeof(clMEM_WindowHeight), &clMEM_WindowHeight);
-    }
-    
+    // SET KERNEL ARGUMENTS / PARAMETERS //
+
+    // Draw Stroke Outlines
+    clSetKernelArg(shaderKernels[0], 0, sizeof(canvas->GetCL()), canvas->GetCLReference()); // Set image to the first arguement of the given Kernel
+    clSetKernelArg(shaderKernels[0], 1, sizeof(clTime), &clTime);     // Set the time to the second arguement of the given Kernel
+    clSetKernelArg(shaderKernels[0], 2, sizeof(clMEM_MaxStrokes), &clMEM_MaxStrokes);
+    clSetKernelArg(shaderKernels[0], 3, sizeof(clMEM_MaxPoints), &clMEM_MaxPoints);
+    clSetKernelArg(shaderKernels[0], 4, sizeof(clMEM_WindowWidth), &clMEM_WindowWidth);
+    clSetKernelArg(shaderKernels[0], 5, sizeof(clMEM_WindowHeight), &clMEM_WindowHeight);
+    clSetKernelArg(shaderKernels[0], 6, sizeof(clMEM_WindowHeight), &clMEM_WindowHeight);
+    clSetKernelArg(shaderKernels[0], 7, sizeof(strokeOutlineIndices->GetGPUData()), strokeOutlineIndices->GetGPUData());
 
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {   // Set kernel arguements for stroke data
-        clSetKernelArg(shaderKernels[0], 6 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
+        clSetKernelArg(shaderKernels[0], 8 + i, sizeof(strokeData[i]->GetGPUData()), strokeData[i]->GetGPUData());
     }
 
+    // Fill Strokes
+    clSetKernelArg(shaderKernels[1], 0, sizeof(canvas->GetCL()), canvas->GetCLReference());
+    clSetKernelArg(shaderKernels[1], 1, sizeof(clTime), &clTime);
+    clSetKernelArg(shaderKernels[1], 2, sizeof(clMEM_MaxStrokes), &clMEM_MaxStrokes);
+    clSetKernelArg(shaderKernels[1], 3, sizeof(clMEM_WindowHeight), &clMEM_WindowHeight);
+    clSetKernelArg(shaderKernels[1], 4, sizeof(clMEM_WindowHeight), &clMEM_WindowHeight);
+    clSetKernelArg(shaderKernels[1], 5, sizeof(strokeOutlineIndices->GetGPUData()), strokeOutlineIndices->GetGPUData());
+    clSetKernelArg(shaderKernels[1], 6, sizeof(strokeData[1]->GetGPUData()), strokeData[1]->GetGPUData()); // Whether stroke is closed or not
+    clSetKernelArg(shaderKernels[1], 7, sizeof(strokeData[2]->GetGPUData()), strokeData[2]->GetGPUData()); // Whether stroke is filled or not
+    
+
+
     //clSetKernelArg(shaderKernels[0], 1, sizeof(uvSampler), &uvSampler);
+    #ifdef DEBUG
+        printf("Pipeline setup complete!\n");
+    #endif
 }
 
 void Pipeline::SetupContext() {
@@ -96,10 +124,14 @@ void Pipeline::Close() {
     clReleaseMemObject(clMEM_WindowWidth);
     clReleaseMemObject(clMEM_WindowHeight);
 
+    strokeOutlineIndices->FreeMemory();
+    delete strokeOutlineIndices;
+    strokeOutlineIndices = nullptr;
+
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
         if (strokeData[i]) {
             strokeData[i]->FreeMemory();
-            free(strokeData[i]);
+            delete strokeData[i];
             strokeData[i] = nullptr;
         }
     }
@@ -218,6 +250,9 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
 
 
     glFinish(); // Finish OpenGL queue before allowing OpenCL to grasp GL objects
+    #ifdef DEBUG_VERBOSE
+        printf("Start Frame process finished!\n");
+    #endif
 }
 void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
     // Fetch OpenGL objects for use in OpenCL
@@ -227,9 +262,10 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
 
     // Run shaders
     size_t work_size[] = {(size_t) width, (size_t) height};
-    for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
-        clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
-    }
+    clEnqueueNDRangeKernel(gpu->queue, shaderKernels[0], 2, NULL, work_size, 0, 0, NULL, NULL);
+    //for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
+    //    clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
+    //}
 
     // Finish OpenCL to allow OpenGL to have control of objects again
     clFinish(gpu->queue);
@@ -284,6 +320,9 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
     }*/
 
     // Do not need to finish or flush GL thanks to buffer swap
+    #ifdef DEBUG_VERBOSE
+        printf("Mid Frame process finished!\n");
+    #endif
 }
 void Pipeline::EndFrame() {
     glfwSwapBuffers(window);

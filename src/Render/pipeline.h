@@ -39,6 +39,7 @@ class Pipeline {
         int maxPoints = 0;              // Maximum number of points
 
         GPUMemory** strokeData;
+        GPUMemory* strokeOutlineIndices;
 
     public:
         // Performs basic setup for GLFW window
