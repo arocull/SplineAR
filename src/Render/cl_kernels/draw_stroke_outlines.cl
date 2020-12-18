@@ -23,7 +23,7 @@ kernel void draw_stroke_outlines(
 
     bool drawn = false; // Set to true once this pixel is fully opaque
 
-    outlineIndices[x + y * (*windowWidth)] = -1;
+    outlineIndices[x + y * (*windowWidth)] = -1; // Blank out fill index
 
     // Start from front and draw to back
     for (int strokeIndex = *maxStrokes - 1, lastPointIndex = *maxPoints - 1, pointIndex = *maxPoints - 1; strokeIndex >= 0 && !drawn; strokeIndex--) {
@@ -79,7 +79,7 @@ kernel void draw_stroke_outlines(
 
                 color = (float4)((float) closed[strokeIndex], 0, t, 1.0f);
                 drawn = true; // Pixel is fully opaque, no further calculations needed
-                outlineIndices[x + y * (*windowWidth)] = strokeIndex;
+                outlineIndices[x + y * (*windowWidth)] = strokeIndex; // Set fill index
             }
         }
 
