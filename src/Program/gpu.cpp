@@ -94,7 +94,7 @@ void GPU::BuildShader(cl_program *program, cl_kernel *kernel, const char* source
     *program = clCreateProgramWithSource(context, 1, (const char**)&source, NULL, &errorcode);
     if (errorcode != 0) { perror("Failed to create shader program\n"); printf("\tSource:\n%s\n\n", source); }
     errorcode = clBuildProgram(*program, 1, &deviceID, NULL, NULL, NULL);
-    if (errorcode != 0) { perror("Failed to copile shader from source:\n"); printf("%s\n\n", source); }
+    if (errorcode != 0) { perror("Failed to compile shader\n"); printf("CL Error Code %i\nSource:\n%s\n----------\n", (int) errorcode, source); }
     *kernel = clCreateKernel(*program, shader_name, &errorcode);
     if (errorcode != 0) { perror("Failed to add shader to kernel\n"); }
 }

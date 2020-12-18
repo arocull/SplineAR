@@ -2,6 +2,7 @@
 
 #include "src/config.h"
 
+#include <string.h>
 #include <CL/cl.h>
 
 #include "src/Program/gpu.h"
@@ -24,6 +25,11 @@ class GPUMemory {
         // Memory object on the CPU
         void* memory;
 
+        // Number of items in the memory block
+        int maxAmount;
+        // Memory flags of the memory block (for reallocation)
+        cl_mem_flags memFlags;
+
         #ifdef DEBUG
         // Catches if the memory objects have already been freed or not (DEBUG ONLY)
         bool freed;
@@ -32,6 +38,8 @@ class GPUMemory {
     public:
         // Returns the size of the data block
         size_t GetSize();
+        // Returns the max numerical amount of items data block
+        int GetMaxAmount();
         // Returns the data of the data block on the CPU (must be cast to appropiate type)
         void* GetData();
         // Returns the cl_mem object of the data block on the GPU
@@ -43,6 +51,13 @@ class GPUMemory {
         void CopyDataToGPU(bool blockingWrite = false);
         // Copies buffer data on GPU into the CPU memory block
         void CopyDataFromGPU(bool blockingWrite = false);
+
+        // Reallocates the buffer on CPU and GPU
+        // - Allocates a new CPU array, and if 'doCopy' is true it then copies GPU buffer onto the new CPU array
+        // - Then deallocates both CPU and GPU arrays
+        // - Finally allocates new GPU array, and if 'doCopy' is true it then copies CPU buffer onto GPU buffer
+        // Returns true if reallocation was successful
+        bool Reallocate(int newSize, bool doCopy = true, bool doGPUCopy = false);
 
         // Deallocates the memory, and if in debug mode, disables copy and fetch functions
         void FreeMemory();

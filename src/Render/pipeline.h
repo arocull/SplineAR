@@ -8,6 +8,7 @@
 
 #include "src/Program/gpu.h"
 #include "src/Program/gpu_memory.h"
+#include "src/Program/gl_texture_handler.h"
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 
@@ -19,10 +20,13 @@ class Pipeline {
         GPU* gpu;
         GLFWwindow* window;
 
-        GLuint canvasGL;
-        cl_mem canvasCL;
+        GLTextureHandler* canvas;
         cl_sampler uvSampler;
         cl_mem clTime;
+        cl_mem clMEM_MaxStrokes;
+        cl_mem clMEM_MaxPoints;
+        cl_mem clMEM_WindowWidth; 
+        cl_mem clMEM_WindowHeight;
 
         cl_program* shaderPrograms;
         cl_kernel* shaderKernels;
@@ -31,8 +35,11 @@ class Pipeline {
         bool canRunPipeline = true;
 
         float time = 0.0f;
+        int maxStrokes = MAX_STROKES;   // Maximum number of drawable strokes
+        int maxPoints = 0;              // Maximum number of points
 
-        // GPUMemory* strokeData[NUM_STROKE_DATA_BUFFERS];
+        GPUMemory** strokeData;
+        GPUMemory* strokeOutlineIndices;
 
     public:
         // Performs basic setup for GLFW window

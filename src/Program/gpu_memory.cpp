@@ -2,6 +2,9 @@
 
 GPUMemory::GPUMemory(GPU* gpuReference, int amount, size_t item_size, cl_mem_flags flags) {
     gpu = gpuReference;
+    
+    maxAmount = amount;
+    memFlags = flags;
     mem_size = item_size * amount;
 
     gpuMemory = gpu->AllocateMemory(amount, item_size, flags);
@@ -13,6 +16,7 @@ GPUMemory::GPUMemory(GPU* gpuReference, int amount, size_t item_size, cl_mem_fla
 }
 
 size_t GPUMemory::GetSize() { return mem_size; }
+int GPUMemory::GetMaxAmount() { return maxAmount; }
 void* GPUMemory::GetData() {
     #ifdef DEBUG
     if (freed) { // If in Debug mode, catch attempts to reference non-existant data
@@ -50,6 +54,56 @@ void GPUMemory::CopyDataFromGPU(bool blockingWrite) {
     }
     #endif
     clEnqueueReadBuffer(gpu->queue, gpuMemory, blockingWrite, 0, mem_size, memory, 0, NULL, NULL);
+}
+
+
+bool GPUMemory::Reallocate(int newSize, bool doCopy, bool doGPUCopy) {
+    #ifdef DEBUG
+    if (freed) { // Do not attempt to interact with GPU or write to CPU if memory has already been freed
+        perror("ERROR: Attempted to reallocate GPU memory block even though it has already been freed!\n");
+        return false;
+    }
+    #endif
+
+    size_t item_size = mem_size / (size_t) maxAmount;
+
+    void* newMem = malloc(item_size * newSize);
+    if (newMem) {
+
+        if (doGPUCopy) { // Copy data from GPU to the new memory
+            cl_int code = clEnqueueReadBuffer(gpu->queue, gpuMemory, true, 0, mem_size, newMem, 0, NULL, NULL);
+            if (code != CL_SUCCESS) {
+                perror("Failed to copy data from GPU in memory block reallocation:\n");
+                printf("\t(CL error code %i)\n", (int) code);
+                free(newMem); // Free new memory to prevent memory leak
+                return false;
+            }
+        } else if (doCopy) {
+            // Copy current memory to new memory array
+            memcpy(newMem, memory, mem_size);
+        }
+
+        FreeMemory(); // Free old memory
+        memory = newMem; // Change pointer address to new memory address
+        gpuMemory = gpu->AllocateMemory(newSize, item_size, memFlags); // Allocate new memory on the GPU
+        // Update tracking variables
+        maxAmount = newSize;
+        mem_size = (size_t) newSize * item_size;
+
+        // Mark data as unfreed since we are still using it (just new memory blocks)
+        #ifdef DEBUG
+            freed = false;
+        #endif
+
+        if (doGPUCopy) {
+            CopyDataToGPU(true);
+        }
+
+        return true;
+    } else {
+        perror("ERROR: Failed to reallocate GPU memory block (not enough CPU malloc failed)!\n");
+        return false;
+    }
 }
 
 

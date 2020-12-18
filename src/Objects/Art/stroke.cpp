@@ -34,6 +34,16 @@ void Stroke::pushPoint(glm::vec2 pointPosition) {
     
     pushPoint(newPoint);
 }
+// Pulls the given point out of the vector array once (from back to front, will not crash if point is not present)
+void Stroke::pullPoint(Point* point) {
+    for (int i = length() - 1; i >= 0; i--) {
+        if (points[i] == point) {
+            points[i] = nullptr;
+            points.erase(points.begin() + i);
+            return;
+        }
+    }
+}
 
 // Returns the number of points in the stroke
 int Stroke::length() {
