@@ -266,9 +266,10 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
 
     // Run shaders
     size_t work_size[] = {(size_t) width, (size_t) height};
-    for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
-        clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
-    }
+    clEnqueueNDRangeKernel(gpu->queue, shaderKernels[0], 2, NULL, work_size, 0, 0, NULL, NULL);
+    //for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
+    //    clEnqueueNDRangeKernel(gpu->queue, shaderKernels[i], 2, NULL, work_size, 0, 0, NULL, NULL);
+    //}
 
     // Finish OpenCL to allow OpenGL to have control of objects again
     clFinish(gpu->queue);

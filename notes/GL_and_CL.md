@@ -25,6 +25,11 @@ Different operating systems requires different methods for fetching the OpenGL c
 And finally, a list of OpenCL [Error Codes](https://streamhpc.com/blog/2013-04-28/opencl-error-codes/)
 
 
+## Shape Filling
+Testing if a point is inside a [complex polygon with spline curves](https://alienryderflex.com/polyspline/)
+
+
+
 # Utilities for Later
 [Multithreading](https://stackoverflow.com/questions/21663555/run-two-functions-at-the-same-time)
 Max O'Cull suggested [pthreads](https://randu.org/tutorials/threads/)
