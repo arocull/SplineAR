@@ -1,5 +1,5 @@
 // Fills empty background and overlays strokes ontop of it
-kernel void draw_strokes(
+kernel void draw_stroke_outlines(
     write_only image2d_t texture, // Canvas texture
     global float* time,           // Current time
     global int* maxStrokes,       // Maximum number of strokes that can be drawn (for indexing)

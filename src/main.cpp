@@ -72,26 +72,9 @@ int main(int argc, char **argv) {
     for (int i = 0; i < MAX_STROKES; i++) {
         strokes[i] = nullptr;
     }
-    //strokes[0] = new Stroke();
-    //strokes[0]->pushPoint(glm::vec2(0.3 * WindowWidth, 0.7 * WindowHeight));
-    //strokes[0]->closed = true;
-//
-    //strokes[0]->points[0]->pos.x = 0.2 * WindowWidth;
-    //strokes[0]->points[0]->pos.y = 0.2 * WindowHeight;
-    //strokes[0]->points[1]->pos.x = 0.4 * WindowWidth;
-    //strokes[0]->points[1]->pos.y = 0.5 * WindowHeight;
-    //strokes[0]->points[0]->thickness = 50;
-    //strokes[0]->points[1]->thickness = 50;
-    //strokes[0]->points[2]->thickness = 40;
 
     Brush* brush = new Brush();
     inputManager->setBrush(brush);
-
-
-    // Basic interop test
-    // Point* testPointData = strokes[0]->getPoint(0.5f);
-    // printf("Test point (%f, %f) with thickness %f\n", testPointData->pos.x, testPointData->pos.y, testPointData->thickness);
-    // delete testPointData;
 
     // Set up clock for delta time fetching
     timespec lastTime;
