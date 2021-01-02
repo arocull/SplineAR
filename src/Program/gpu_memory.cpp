@@ -1,5 +1,9 @@
 #include "src/Program/gpu_memory.h"
 
+#ifdef DEBUG
+    int gpuMemObjects = 0;
+#endif
+
 GPUMemory::GPUMemory(GPU* gpuReference, int amount, size_t item_size, cl_mem_flags flags) {
     gpu = gpuReference;
     
@@ -11,7 +15,10 @@ GPUMemory::GPUMemory(GPU* gpuReference, int amount, size_t item_size, cl_mem_fla
     memory = malloc(mem_size); // Creates empty set of data (needs clearing)
 
     #ifdef DEBUG
-    freed = false;
+    freed = false; // Mark object as unfreed
+    id = gpuMemObjects; // Set object ID
+    gpuMemObjects++; // Add to total memory objects
+    printf("\tCreated and allocated new GPU memory object %i with size %i\n", id, (int) mem_size);
     #endif
 }
 
@@ -93,11 +100,14 @@ bool GPUMemory::Reallocate(int newSize, bool doCopy, bool doGPUCopy) {
         // Mark data as unfreed since we are still using it (just new memory blocks)
         #ifdef DEBUG
             freed = false;
+            printf("\t\t...newly allocated size for memory object %i is now %i\n", id, (int) mem_size);
         #endif
 
         if (doGPUCopy) {
             CopyDataToGPU(true);
         }
+
+        clFinish(gpu->queue); // Wait for memory to copy over
 
         return true;
     } else {
@@ -109,11 +119,12 @@ bool GPUMemory::Reallocate(int newSize, bool doCopy, bool doGPUCopy) {
 
 void GPUMemory::FreeMemory() {
     #ifdef DEBUG
-    if (freed) {
-        perror("ERROR: Attempted to free memory block that has already been freed!\n");
-        return;
-    }
-    freed = true;
+        printf("\tFreeing GPU memory object %i of size %i\n", id, (int) mem_size);
+        if (freed) {
+            perror("ERROR: Attempted to free memory block that has already been freed!\n");
+            return;
+        }
+        freed = true;
     #endif
     clReleaseMemObject(gpuMemory);
     free(memory);

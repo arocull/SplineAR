@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 
     // Initialize OpenCL
     GPU gpu = GPU();
-    Pipeline pipeline = Pipeline(&gpu, window.glWindow);
+    Pipeline pipeline = Pipeline(&gpu, &window);
 
     pipeline.SetupContext();
 
@@ -109,6 +109,7 @@ int main(int argc, char **argv) {
             }
         }
 
+        window.checkResizing();
         pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw));
     }
     printf("Loop ended. Closing program...\n");
@@ -120,8 +121,10 @@ int main(int argc, char **argv) {
     pipeline.Close();
     gpu.Close();
 
+    printf("Deleting input manager\n");
     delete inputManager;
 
+    printf("Closing window\n");
     window.Close();
     glfwTerminate();
 

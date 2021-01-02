@@ -1,8 +1,8 @@
 #include "src/Render/pipeline.h"
 
-Pipeline::Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext) {
+Pipeline::Pipeline(GPU* pipelineGPU, PWindow* programWindow) {
     gpu = pipelineGPU;
-    window = windowContext;
+    window = programWindow;
 
     // Compile Initial Shaders
     shaderPrograms = (cl_program*) calloc(NUM_SHADERS_PRIMARY, sizeof(cl_program));
@@ -116,6 +116,9 @@ void Pipeline::Close() {
         printf("Graphics pipeline finished. Closing pipeline...\n");
     }
 
+    #ifdef DEBUG
+        printf("Closing pipeline:\n\tReleasing CL memory objects\n");
+    #endif
     clReleaseSampler(uvSampler);
     clReleaseMemObject(clTime);
     clReleaseMemObject(clMEM_MaxStrokes);
@@ -123,10 +126,16 @@ void Pipeline::Close() {
     clReleaseMemObject(clMEM_WindowWidth);
     clReleaseMemObject(clMEM_WindowHeight);
 
+    #ifdef DEBUG
+        printf("\tFreeing stroke outline index array\n");
+    #endif
     strokeOutlineIndices->FreeMemory();
     delete strokeOutlineIndices;
     strokeOutlineIndices = nullptr;
 
+    #ifdef DEBUG
+        printf("\tFreeing stroke data buffers and storage array\n");
+    #endif
     for (int i = 0; i < NUM_STROKE_DATA_BUFFERS; i++) {
         if (strokeData[i]) {
             strokeData[i]->FreeMemory();
@@ -136,12 +145,27 @@ void Pipeline::Close() {
     }
     free(strokeData);
 
+    #ifdef DEBUG
+        printf("\tFreeing canvas texture\n");
+    #endif
     canvas->Free();
 
-    for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
-        clReleaseKernel(shaderKernels[i]);
-        clReleaseProgram(shaderPrograms[i]);
-    }
+    #ifdef DEBUG
+        printf("\tReleasing shader kernels and programs\n");
+        // Oddly, a segfault happens somewhere around here, but it is inconsistent and will not say.
+        // After adding the print statements here, however, it has disappeared??
+        for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
+            printf("\t\tReleasing kernel %i\n", i);
+            clReleaseKernel(shaderKernels[i]);
+            printf("\t\tReleasing program %i\n", i);
+            clReleaseProgram(shaderPrograms[i]);
+        }
+    #else
+        for (int i = 0; i < NUM_SHADERS_PRIMARY; i++) {
+            clReleaseKernel(shaderKernels[i]);
+            clReleaseProgram(shaderPrograms[i]);
+        }
+    #endif
 }
 
 
@@ -149,13 +173,10 @@ void Pipeline::RunPipeline(float DeltaTime, Stroke** strokes) {
     if (!canRunPipeline || pipelineRunning) return;
     pipelineRunning = true;
 
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-
     time += DeltaTime;
 
-    StartFrame(strokes, width, height);
-    MidFrame(strokes, width, height);
+    StartFrame(strokes, window->getViewWidth(), window->getViewHeight());
+    MidFrame(strokes, window->getViewWidth(), window->getViewHeight());
     EndFrame();
 
     pipelineRunning = false;
@@ -168,13 +189,16 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
     // glClearDepth(10.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-    double windowAspect = width / height;
+    double windowAspect = (double) width / (double) height;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, windowAspect, 0, 1, 0, 10); // TODO: Make left side and right side of windowAspect centered
+    glOrtho(0, 1, 0, 1, 0, 10); // TODO: Make left side and right side of windowAspect centered
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    #ifdef DEBUG_VERBOSE
+        printf("\tSet up GL projection mode to Orthographic with a window aspect of %f (scale %i, %i)\n", windowAspect, width, height);
+    #endif
 
 
     // Start updating memory and piping stroke info into OpenCL (requires data conversion)--potentially call read-lock here?
@@ -182,8 +206,8 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
     gpu->WriteMemory(clMEM_WindowWidth, &width, sizeof(int)); // Updates CL window width
     gpu->WriteMemory(clMEM_WindowHeight, &height, sizeof(int)); // Updates CL window height
 
-    if (width * height > strokeOutlineIndices->GetMaxAmount()) { // Resize stroke outline indices incase window grows or shrinks
-        strokeOutlineIndices->Reallocate(width * height, true, false);
+    if (width * height != strokeOutlineIndices->GetMaxAmount()) { // Resize stroke outline indices incase window grows or shrinks
+        strokeOutlineIndices->Reallocate(width * height, false, false);
         strokeOutlineIndices->CopyDataToGPU();
     }
 
@@ -217,7 +241,7 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
                     rightHandles =   ((cl_float2*) (strokeData[5]->GetData()));
                     thickness =      ((cl_float*) (strokeData[6]->GetData()));
 
-                    printf("Reallocated stroke data to account for new max points %i (from %i)\n", strokeData[3]->GetMaxAmount(), maxPoints);
+                    printf("\tReallocated stroke data to account for new max points %i (from %i)\n", strokeData[3]->GetMaxAmount(), maxPoints);
                 }
 
                 for (int j = 0; j < strokeLen; pointIndex++, j++) {
@@ -279,7 +303,12 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
 
     // Draw updated Canvas texture
     canvas->BindGLTexture();
-    canvas->DrawGLTexture();
+    canvas->DrawGLTexture(
+        window->getViewHorizontalOffsetGL(),
+        window->getViewVerticalOffsetGL(),
+        window->getViewHorizontalOffsetGL() + window->getViewWidthGL(),
+        window->getViewVerticalOffsetGL() + window->getViewHeightGL()
+    );
     canvas->UnbindGLTexture();
 
     // Draw strokes ontop of texture
@@ -329,5 +358,5 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height) {
     #endif
 }
 void Pipeline::EndFrame() {
-    glfwSwapBuffers(window);
+    glfwSwapBuffers(window->getGLWindow());
 }

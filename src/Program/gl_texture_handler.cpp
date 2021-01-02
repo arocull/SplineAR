@@ -48,14 +48,17 @@ void GLTextureHandler::UnbindGLTexture() {
 }
 // Draws a square with a UV
 // The function is actually generic
-// TODO: Manually set corner points
-void GLTextureHandler::DrawGLTexture() {
+void GLTextureHandler::DrawGLTexture(float x1, float y1, float x2, float y2) {
     glBegin(GL_QUADS);
-    glTexCoord2i(0, 0); glVertex2i(0, 0);   // Set UV and draw coordinates
-    glTexCoord2i(0, 1); glVertex2i(0, 1);
-    glTexCoord2i(1, 1); glVertex2i(1, 1);
-    glTexCoord2i(1, 0); glVertex2i(1, 0);
+    glTexCoord2i(0, 0); glVertex2i(x1, y1);   // Set UV and draw coordinates
+    glTexCoord2i(0, 1); glVertex2i(x1, y2);
+    glTexCoord2i(1, 1); glVertex2i(x2, y2);
+    glTexCoord2i(1, 0); glVertex2i(x2, y1);
     glEnd();
+
+    #ifdef DEBUG_VERBOSE
+        printf("\tDrawing texture from %f, %f to %f, %f\n", x1, y1, x2, y2);
+    #endif
 }
 
 

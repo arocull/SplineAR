@@ -65,8 +65,11 @@ GPU::GPU() {
 }
 
 void GPU::Close() {
+    printf("Closing GPU:\n\tReleasing command queue\n");
     clReleaseCommandQueue(queue);
+    printf("\tReleasing context\n");
     clReleaseContext(context);
+    printf("\tReleasing device\n");
     clReleaseDevice(deviceID);
 }
 

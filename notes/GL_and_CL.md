@@ -11,6 +11,8 @@ Old NVidia [OpenCL Demos](https://developer.nvidia.com/opencl) (not Linux-compat
 
 A list of [math functions](https://www.khronos.org/registry/OpenCL/specs/2.2/html/OpenCL_C.html#math-functions) for OpenCL
 
+OpenCL [best practices](http://developer.download.nvidia.com/compute/cuda/3_2_prod/toolkit/docs/OpenCL_Best_Practices_Guide.pdf) guide by NVidia
+
 
 ## Interoperability between OpenGL and OpenCL
 Basic 2-Directional Texture Manipulation [Gist by Twinklebear](https://gist.github.com/Twinklebear/5393665)

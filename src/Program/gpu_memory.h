@@ -2,6 +2,7 @@
 
 #include "src/config.h"
 
+#include <cstdio>
 #include <string.h>
 #include <CL/cl.h>
 
@@ -33,6 +34,8 @@ class GPUMemory {
         #ifdef DEBUG
         // Catches if the memory objects have already been freed or not (DEBUG ONLY)
         bool freed;
+        // Numeric ID for the memory object, for tracking purposes
+        int id;
         #endif
     
     public:

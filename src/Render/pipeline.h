@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
 
+#include "src/Program/window.h"
 #include "src/Program/gpu.h"
 #include "src/Program/gpu_memory.h"
 #include "src/Program/gl_texture_handler.h"
@@ -14,11 +15,11 @@
 
 class Pipeline {
     public:
-        Pipeline(GPU* pipelineGPU, GLFWwindow* windowContext);
+        Pipeline(GPU* pipelineGPU, PWindow* programWindow);
 
     private:
         GPU* gpu;
-        GLFWwindow* window;
+        PWindow* window;
 
         GLTextureHandler* canvas;
         cl_sampler uvSampler;

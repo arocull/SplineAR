@@ -2,6 +2,10 @@
 
 #include "src/config.h"
 
+#ifdef DEBUG_VERBOSE
+    #include <cstdio>
+#endif
+
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
 
@@ -19,7 +23,7 @@ class GLTextureHandler {
     public:
         bool BindGLTexture();
         void UnbindGLTexture();
-        void DrawGLTexture();
+        void DrawGLTexture(float x1 = 0.0f, float y1 = 0.0f, float x2 = 0.0f, float y2 = 0.0f);
 
         void HoldCLTexture(GPU* gpu);
         void ReleaseCLTexture(GPU* gpu);
