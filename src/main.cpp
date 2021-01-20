@@ -35,10 +35,16 @@ int main(int argc, char **argv) {
 
     PWindow window = PWindow(WindowWidth, WindowHeight, "SplineAR");
     if (!window.glWindow) {
-        const char** errorMsg;
-        int errorCode = glfwGetError(errorMsg);
         perror("Error: could not create GL window!\n");
-        printf("Code %i with message %s\n", errorCode, *errorMsg);
+
+        const char** errorMsg;
+        #ifdef PLATFORM_MINT
+        int errorCode = glGetError();
+        printf("Error Code %i\n", errorCode);
+        #else
+        int errorCode = glfwGetError(errorMsg);
+        printf("Error Code %i with message %s\n", errorCode, *errorMsg);
+        #endif
 
         return -1;
     }
@@ -56,10 +62,11 @@ int main(int argc, char **argv) {
     #endif
 
     // Initialize OpenCL
+    #ifndef DISABLE_GPU
     GPU gpu = GPU();
     Pipeline pipeline = Pipeline(&gpu, &window);
-
     pipeline.SetupContext();
+    #endif
 
 
     // Set up input sampler
@@ -110,7 +117,9 @@ int main(int argc, char **argv) {
         }
 
         window.checkResizing();
+        #ifndef DISABLE_GPU
         pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw));
+        #endif
     }
     printf("Loop ended. Closing program...\n");
 
@@ -118,8 +127,10 @@ int main(int argc, char **argv) {
     delete workspace;
 
     // Free OpenCL
+    #ifndef DISABLE_GPU
     pipeline.Close();
     gpu.Close();
+    #endif
 
     printf("Deleting input manager\n");
     delete inputManager;
