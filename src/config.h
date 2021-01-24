@@ -5,10 +5,10 @@
 #define CL_TARGET_OPENCL_VERSION 220
 
 #define PLATFORM_LINUX
-// #define PLATFORM_MINT // Enable if using Linux Mint (solves platform-specific GL issues)
+#define PLATFORM_MINT // Enable if using Linux Mint (solves platform-specific GL issues)
 // #define PLATFORM_WINDOWS
 // #define PLATFORM_MACOS
-// #define DISABLE_GPU // Disables OpenCL for devices that do not have supported GPUs
+#define DISABLE_GPU // Disables OpenCL for devices that do not have supported GPUs
 
 #define DEBUG         // If enabled, certain developer features and error-catches will be enabled
 //#define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information

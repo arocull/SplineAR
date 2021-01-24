@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8">
+<workspace name="Workspace1">
+    <workData>
+            0; 0.0; 1.0; <!-- Work mode, time, time scale -->
+    </workData>
+
+    <settings>
+        <frameData>
+            0; 250; 60; <!-- Start frame, end frame, frames per seccond -->
+        </frameData>
+    </settings>
+
+    <brushes>
+
+    </brushes>
+
+    <shaders>
+        <shader name="Cool Shader">
+            raw shader code here, be wary of indentation?
+        </shader>
+    </shaders>
+
+    <!-- TODO: Decide which order to load first, figure out pointer system -->
+    <strokes>
+
+    </strokes>
+    <rigging>
+
+    </rigging>
+</workspace>
