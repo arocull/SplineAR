@@ -28,6 +28,8 @@
 #include "src/Objects/Art/stroke.h"
 #include "src/Objects/Tools/brush.h"
 
+#include "src/Objects/Interface/uiframe.h"
+
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
 int main(int argc, char **argv) {
     // Initialize openGL and PWindow
@@ -78,8 +80,15 @@ int main(int argc, char **argv) {
     // threads.StartThreads();
 
     // Create a workspace
-    Workspace* workspace = new Workspace("TestWindow");
+    Workspace* workspace = new Workspace("NewWorkspace");
     window.UpdateTitle(workspace->getName(), workspace->getMode());
+
+    // TODO: UI Manager class
+    UIFrame** interfaces = (UIFrame**) calloc(5, sizeof(UIFrame*));
+    for (int i = 0; i < 5; i++) {
+        interfaces[i] = nullptr;
+    }
+    interfaces[0] = new UIFrame();
 
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -118,10 +127,15 @@ int main(int argc, char **argv) {
 
         window.checkResizing();
         #ifndef DISABLE_GPU
-        pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw));
+        pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw), interfaces);
         #endif
     }
     printf("Loop ended. Closing program...\n");
+
+    // Disable UI
+    for (int i = 0; i < 5; i++) {
+        if (interfaces[i]) delete interfaces[i];
+    }
 
     // Close workspace
     delete workspace;

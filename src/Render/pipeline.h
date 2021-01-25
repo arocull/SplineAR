@@ -12,6 +12,7 @@
 #include "src/Program/gl_texture_handler.h"
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
+#include "src/Objects/Interface/uiframe.h"
 
 class Pipeline {
     public:
@@ -49,13 +50,13 @@ class Pipeline {
         void Close();
 
         // Runs the graphics pipeline--Goes from OpenGL, to OpenCL, to buffer swap
-        void RunPipeline(float DeltaTime, Stroke** strokes);
+        void RunPipeline(float DeltaTime, Stroke** strokes, UIFrame** interfaces);
 
     protected:
         // Start pipeline -- runs initial setup, buffer clears, applies camera transforms, etc
         void StartFrame(Stroke** strokes, int width, int height);
         // Run GL and CL pipelines
-        void MidFrame(Stroke** strokes, int width, int height);
+        void MidFrame(Stroke** strokes, int width, int height, UIFrame** interfaces);
         // Swaps buffers and pops out of matrix transforms
         void EndFrame();
 };
