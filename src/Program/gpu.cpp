@@ -89,7 +89,7 @@ void GPU::BuildShaderFromFile(cl_program *program, cl_kernel *kernel, const char
         printf("\nLoaded shader source from file %s\n", path);
     #endif
 
-    return BuildShader(program, kernel, source_str, shader_name);
+    BuildShader(program, kernel, source_str, shader_name);
     free(source_str);
 }
 void GPU::BuildShader(cl_program *program, cl_kernel *kernel, const char* source, const char* shader_name) {
