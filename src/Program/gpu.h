@@ -22,9 +22,9 @@ class GPU {
   
   public:
     // Builds a CL Program and compiles a CL Kernel from a file path and shader name
-    void BuildShaderFromFile(cl_program *program, cl_kernel *kernel, const char* path, const char* shader_name);
+    void BuildShaderFromFile(cl_program *program, cl_kernel *kernel, const char* path, const char* shader_name, const char* compile_flags);
     // Builds a CL Program and compiles a CL Kernel from a string and shader name
-    void BuildShader(cl_program *program, cl_kernel *kernel, const char* source, const char* shader_name);
+    void BuildShader(cl_program *program, cl_kernel *kernel, const char* source, const char* shader_name, const char* compile_flags);
 
     // Allocates a cl_mem object for the given data, flags default to read-write
     // Note: Memory is NOT automatically deallocated

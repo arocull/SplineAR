@@ -9,8 +9,8 @@ Pipeline::Pipeline(GPU* pipelineGPU, PWindow* programWindow) {
     shaderKernels = (cl_kernel*) calloc(NUM_SHADERS_PRIMARY, sizeof(cl_kernel));
 
     // Build shaders
-    gpu->BuildShaderFromFile(&(shaderPrograms[0]), &(shaderKernels[0]), "src/Render/cl_kernels/draw_stroke_outlines.cl", "draw_stroke_outlines");
-    gpu->BuildShaderFromFile(&(shaderPrograms[1]), &(shaderKernels[1]), "src/Render/cl_kernels/fill_strokes.cl", "fill_strokes");
+    gpu->BuildShaderFromFile(&(shaderPrograms[0]), &(shaderKernels[0]), "src/Render/cl_kernels/draw_stroke_outlines.cl", "draw_stroke_outlines", "-I../cl_headers");
+    gpu->BuildShaderFromFile(&(shaderPrograms[1]), &(shaderKernels[1]), "src/Render/cl_kernels/fill_strokes.cl", "fill_strokes", "-I../cl_headers");
 
     // Generate Canvas Texture and Pipe into OpenCL
     canvas = new GLTextureHandler(gpu, WindowWidth, WindowHeight);
