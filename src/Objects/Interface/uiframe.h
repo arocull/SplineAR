@@ -1,5 +1,11 @@
 #pragma once
 
+#include "src/config.h"
+
+#ifdef DEBUG
+#include <cstdio>
+#endif
+
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
@@ -8,22 +14,27 @@
 // UI Frame - Base class for all UI elements
 class UIFrame {
     public:
-        UIFrame(
-            glm::vec2 pos = glm::vec2(0, 0),
-            glm::vec2 size = glm::vec2(0.1, 0.1),
-            glm::vec4 col = glm::vec4(1, 1, 1, 0),
-            UIFrame* parentPointer = nullptr
-        );
-    
+        UIFrame();
+
+        void setPositionScale(glm::vec2 pos, glm::vec2 size);
+        void setColor(glm::vec4 col);
+        void setParent(UIFrame* parentPointer);
+        glm::vec2 getPosition();
+        glm::vec2 getScale();
+        glm::vec4 getColor();
+        UIFrame* getParent();
+
+        bool lockAspect; // If true, locks the dimensions of the button to lowest of X or Y screen width
+
+    private:
         glm::vec2 position;
         glm::vec2 scale;
-        bool lockAspect = false; // If true, locks the dimensions of the button to lowest of X or Y screen width
 
         glm::vec4 color;
 
         UIFrame* parent; // Parent of this frame, should be drawn first
 
-    private:
+
         glm::vec2 computedPosition;
         glm::vec2 computedScale;
 

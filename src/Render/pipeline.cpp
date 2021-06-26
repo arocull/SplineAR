@@ -199,6 +199,7 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
     #ifdef DEBUG_VERBOSE
         printf("\tSet up GL projection mode to Orthographic with a window aspect of %f (scale %i, %i)\n", windowAspect, width, height);
     #endif
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Reset coloring
 
 
     // Start updating memory and piping stroke info into OpenCL (requires data conversion)--potentially call read-lock here?
@@ -353,17 +354,17 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height, UIFrame** inter
     }*/
 
     // Reset canvas to ignore aspect ratio, for drawing UI
-    //glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-    //glOrtho(0, 1, 0, 1, 0, 10);
-    //glMatrixMode(GL_MODELVIEW);
-    //glLoadIdentity();
-    //glClear( GL_DEPTH_BUFFER_BIT );
-    //for (int i = 0; i < 5; i++) {
-    //    if (interfaces[i]) {
-    //        interfaces[i]->draw(glm::vec2(1, 1));
-    //    }
-    //}
+    // glMatrixMode(GL_PROJECTION);
+    // glLoadIdentity();
+    // glOrtho(0, 1, 0, 1, 0, 10);
+    // glMatrixMode(GL_MODELVIEW);
+    // glLoadIdentity();
+    // glClear( GL_DEPTH_BUFFER_BIT );
+    for (int i = 0; i < 5; i++) {
+        if (interfaces[i]) {
+            interfaces[i]->draw(glm::vec2(1, 1));
+        }
+    }
 
     // Do not need to finish or flush GL thanks to buffer swap
     #ifdef DEBUG_VERBOSE

@@ -1,14 +1,32 @@
 #include "src/Objects/Interface/uiframe.h"
 
-UIFrame::UIFrame(glm::vec2 pos, glm::vec2 size, glm::vec4 col, UIFrame* parentPointer) {
-    glm::vec2 position = pos;
-    glm::vec2 scale = size;
+UIFrame::UIFrame() {
+    glm::vec2 position = glm::vec2(0.05, 0.05);
+    glm::vec2 scale = glm::vec2(0.1, 0.1);
     glm::vec2 computedPosition = glm::vec2(0, 0);
     glm::vec2 computedScale = glm::vec2(0, 0);
 
+    color = glm::vec4(1, 1, 1, 1);
+    parent = nullptr;
+    lockAspect = false;
+}
+
+// GETTERS / SETTERS //
+void UIFrame::setPositionScale(glm::vec2 pos, glm::vec2 size) {
+    position = pos;
+    scale = size;
+}
+void UIFrame::setColor(glm::vec4 col) {
     color = col;
+}
+void UIFrame::setParent(UIFrame* parentPointer) {
     parent = parentPointer;
 }
+glm::vec2 UIFrame::getPosition() { return position; }
+glm::vec2 UIFrame::getScale() { return scale; }
+glm::vec4 UIFrame::getColor() { return color; }
+UIFrame* UIFrame::getParent() { return parent; }
+
 
 glm::vec2 UIFrame::getComputedPosition() {
     return computedPosition;

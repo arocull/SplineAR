@@ -11,7 +11,7 @@
 // #define DISABLE_GPU // Disables OpenCL pipeline for devices that do not have supported GPUs (lets you compile, but not use program)
 
 #define DEBUG         // If enabled, certain developer features and error-catches will be enabled
-//#define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information
+// #define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information
 
 /* Configuration */
 

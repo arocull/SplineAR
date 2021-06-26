@@ -91,6 +91,7 @@ int main(int argc, char **argv) {
         interfaces[i] = nullptr;
     }
     interfaces[0] = new UIFrame();
+    interfaces[0]->setPositionScale(glm::vec2(0.05, 0.05), glm::vec2(0.1, 0.1));
 
     // Set up clock for delta time fetching
     timespec lastTime;
