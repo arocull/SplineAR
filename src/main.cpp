@@ -72,7 +72,9 @@ int main(int argc, char **argv) {
 
 
     // Set up input sampler
-    InputManager* inputManager = new InputManager(window.glWindow);
+    // InputManager* inputManager = new InputManager(window.glWindow);
+    InputManager::Initialize();
+    InputManager::RegisterContext(window.glWindow);
 
 
     // Initialize threads
@@ -112,15 +114,15 @@ int main(int argc, char **argv) {
         frames++;
 
         // Set active drawing brush to the current brush the workspace is using
-        inputManager->setBrush(workspace->getBrush());
+        InputManager::setBrush(workspace->getBrush());
 
         workspace->tick(DeltaTime);
 
-        Stroke* newStroke = inputManager->tickInput(); // Tick stroke input, recieve new stroke if new one was created
+        Stroke* newStroke = InputManager::tickInput(); // Tick stroke input, recieve new stroke if new one was created
         if (newStroke) { // If a stroke was created, go through all strokes and fill the next one with this one
             bool placed = workspace->addStroke(newStroke);
             if (!placed) { // If we are unable to place the stroke, forcibly end the stroke and delete it
-                inputManager->forceEndStroke();
+                InputManager::forceEndStroke();
                 delete newStroke;
             }
         }
@@ -146,8 +148,8 @@ int main(int argc, char **argv) {
     gpu.Close();
     #endif
 
-    printf("Deleting input manager\n");
-    delete inputManager;
+    printf("Deallocating input manager\n");
+    InputManager::Deallocate();
 
     printf("Closing window\n");
     window.Close();

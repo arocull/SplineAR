@@ -1,21 +1,35 @@
 #include "src/Program/input_manager.h"
 
-InputManager::InputManager(GLFWwindow* glfwContext) {
-    context = glfwContext;
+GLFWwindow* InputManager::context;
+Brush* InputManager::brush = nullptr;
+bool InputManager::mouseWasDown = false;
+Keystroke** InputManager::keystrokes = nullptr;
+
+void InputManager::Initialize() {
+
 
     keystrokes = (Keystroke**) malloc(KEYSTROKE_BUFFER_SIZE * sizeof(Keystroke*));
     for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
         keystrokes[i] = nullptr;
     }
-
-    glfwSetKeyCallback(context, callbackKeystroke);
 }
-InputManager::~InputManager() {
+void InputManager::Deallocate() {
     for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
         handleKeystroke(i);
     }
+    free(keystrokes);
 }
 
+
+// Register Context - Takes the given GLFW window and makes it the InputManager's context
+// TODO: Handle context as an array (for multiple windows)?
+void InputManager::RegisterContext(GLFWwindow* newContext) {
+    context = newContext;
+    glfwSetKeyCallback(context, callbackKeystroke);
+}
+
+
+// BRUSHES //
 void InputManager::setBrush(Brush* newBrush) {
     brush = newBrush;
 }
@@ -59,12 +73,18 @@ Stroke* InputManager::tickInput() {
 
     return createdStroke;
 }
-
 void InputManager::forceEndStroke() {
     if (brush) brush->endStroke();
 }
 
+
+// KEYSTROKES //
 void InputManager::appendKeystroke(Keystroke* keystroke) {
+    #ifdef DEBUG_VERBOSE
+        printf("Inputted ");
+        DEBUG_Print_Keystroke(keystroke);
+    #endif
+
     for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
         if (keystrokes[i] == nullptr) {
             keystrokes[i] = keystroke;
@@ -78,13 +98,19 @@ void InputManager::appendKeystroke(Keystroke* keystroke) {
 }
 void InputManager::handleKeystroke(int index) {
     if (keystrokes[index]) {
+        #ifdef DEBUG_VERBOSE
+            printf("Freeing keystroke %i\n\t", index);
+            DEBUG_Print_Keystroke(keystrokes[index]);
+        #endif
+
         delete keystrokes[index];
         keystrokes[index] = nullptr;
     }
 }
-
-// STATIC FUNCTION //
 void InputManager::callbackKeystroke(GLFWwindow* context, int key, int scancode, int action, int modifiers) {
+    if (action == GLFW_RELEASE) return; // Don't record inputs for released keys
+    if (action == GLFW_REPEAT) return; // Don't record inputs for repeated keys
+
     Keystroke* state = new Keystroke();
     // state->shift = glfwGetKey(context, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(context, GLFW_KEY_RIGHT_SHIFT);
     // state->control = glfwGetKey(context, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(context, GLFW_KEY_RIGHT_CONTROL);
@@ -96,4 +122,21 @@ void InputManager::callbackKeystroke(GLFWwindow* context, int key, int scancode,
     state->alt = (modifiers & (1<<(GLFW_MOD_ALT)));
     state->super = (modifiers & (1<<(GLFW_MOD_SUPER)));
     state->capsMode = (modifiers & (1<<(GLFW_MOD_CAPS_LOCK)));
+
+    state->key = key;
+    state->scancode = scancode;
+
+    InputManager::appendKeystroke(state);
 }
+
+
+// DEBUG //
+#ifdef DEBUG
+void InputManager::DEBUG_Print_Keystroke(Keystroke* state) {
+    printf("Keystroke: Key %i [%s]\tScancode %i\n\tSHIFT %i, CNTRL %i, ALT %i, SUPER %i, CAPS %i\n",
+        state->key, glfwGetKeyName(state->key, state->scancode), state->scancode,
+        state->shift, state->control, state->alt, state->super, state->capsMode
+    );
+}
+
+#endif
