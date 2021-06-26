@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 
 #include "src/Objects/Tools/brush.h"
+#include "src/Objects/Input/keystroke.h"
 
 class InputManager {
     public:
@@ -21,8 +22,14 @@ class InputManager {
 
         bool mouseWasDown = false;
 
+        Keystroke** keystrokes;
+        void appendKeystroke(Keystroke* keystroke);
+
     public:
         void setBrush(Brush* newBrush);
         Stroke* tickInput();
         void forceEndStroke();
+
+        void handleKeystroke(int index);
+        static void callbackKeystroke(GLFWwindow* context, int key, int scancode, int action, int modifiers);
 };

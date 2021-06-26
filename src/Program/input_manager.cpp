@@ -2,9 +2,18 @@
 
 InputManager::InputManager(GLFWwindow* glfwContext) {
     context = glfwContext;
+
+    keystrokes = (Keystroke**) malloc(KEYSTROKE_BUFFER_SIZE * sizeof(Keystroke*));
+    for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
+        keystrokes[i] = nullptr;
+    }
+
+    glfwSetKeyCallback(context, callbackKeystroke);
 }
 InputManager::~InputManager() {
-
+    for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
+        handleKeystroke(i);
+    }
 }
 
 void InputManager::setBrush(Brush* newBrush) {
@@ -53,4 +62,38 @@ Stroke* InputManager::tickInput() {
 
 void InputManager::forceEndStroke() {
     if (brush) brush->endStroke();
+}
+
+void InputManager::appendKeystroke(Keystroke* keystroke) {
+    for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
+        if (keystrokes[i] == nullptr) {
+            keystrokes[i] = keystroke;
+            return;
+        }
+    }
+    
+    // If there was no spot available for the input, handle the first one and replace it?
+    handleKeystroke(0);
+    keystrokes[0] = keystroke;
+}
+void InputManager::handleKeystroke(int index) {
+    if (keystrokes[index]) {
+        delete keystrokes[index];
+        keystrokes[index] = nullptr;
+    }
+}
+
+// STATIC FUNCTION //
+void InputManager::callbackKeystroke(GLFWwindow* context, int key, int scancode, int action, int modifiers) {
+    Keystroke* state = new Keystroke();
+    // state->shift = glfwGetKey(context, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(context, GLFW_KEY_RIGHT_SHIFT);
+    // state->control = glfwGetKey(context, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(context, GLFW_KEY_RIGHT_CONTROL);
+    // state->alt = glfwGetKey(context, GLFW_KEY_LEFT_ALT) || glfwGetKey(context, GLFW_KEY_RIGHT_ALT);
+    // state->super = glfwGetKey(context, GLFW_KEY_HOME);
+
+    state->shift = (modifiers & (1<<(GLFW_MOD_SHIFT))); // Check if shift bit is set to true
+    state->control = (modifiers & (1<<(GLFW_MOD_CONTROL))); // Check if control bit is set to true
+    state->alt = (modifiers & (1<<(GLFW_MOD_ALT)));
+    state->super = (modifiers & (1<<(GLFW_MOD_SUPER)));
+    state->capsMode = (modifiers & (1<<(GLFW_MOD_CAPS_LOCK)));
 }
