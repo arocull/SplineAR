@@ -8,7 +8,7 @@
 // #define PLATFORM_MINT // Enable if using Linux Mint (solves platform-specific GL issues)
 // #define PLATFORM_WINDOWS
 // #define PLATFORM_MACOS
-// #define DISABLE_GPU // Disables OpenCL for devices that do not have supported GPUs
+// #define DISABLE_GPU // Disables OpenCL pipeline for devices that do not have supported GPUs (lets you compile, but not use program)
 
 #define DEBUG         // If enabled, certain developer features and error-catches will be enabled
 //#define DEBUG_VERBOSE // If enabled, system will print essentially all relevant information

@@ -29,6 +29,7 @@ Far future ideas:
 
 ## Dependencies
 Uses a mixture of OpenGL and OpenCL, with GLEW and GLFW as assistants. Requires installation of the following libraries.
+(If you use a non-NVidia card, be sure to get the corresponding OpenCL library instead).
 
 `$ sudo apt install nvidia-opencl-dev libgl1-mesa-dev mesa-common-dev libglew-dev libglfw3-dev libglm-dev`
 

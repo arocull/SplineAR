@@ -22,7 +22,7 @@ GLFWwindow* PWindow::getGLWindow() {
 }
 
 
-// Check if resizing is still occurring
+// PWindow - Check Resizing - Check if resizing is still occurring
 // If the window has not been resized for 10+ frames, it will automatically resize the viewport
 void PWindow::checkResizing() {
     int newWidth, newHeight;
@@ -42,14 +42,14 @@ void PWindow::checkResizing() {
         }
     }
 }
-// Update window width and height to new values
+// PWindow - Resize - Update window width and height to new values
 // Note, this will likely cause some reallocation within the pipeline, so be cautious while performing this action
 void PWindow::resize() {
     glfwGetFramebufferSize(glWindow, &width, &height);
     glViewport(0, 0, width, height);
 }
 
-
+// PWindow - Update Title - Updates the title of the Program Window to use the workspace name + work mode
 void PWindow::UpdateTitle(char* workspaceName, EWorkMode workMode) {
     char title[64];
     strcpy(title, "SplineAR - ");

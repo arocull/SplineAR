@@ -40,6 +40,7 @@ class Stroke {
         void pullPoint(Point* point);
 
         int length();
+        void shrinkwrap();
 
         // Returns the point info on the stroke at the given parametric
         // Returns a newly allocated Point* (note: must be deleted after use)

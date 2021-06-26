@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <string.h>
 
+// (Program) Window - Basic window for viewing and interaction
 class PWindow {
     public:
         PWindow(int windowWidth, int windowHeight, const char* windowName);

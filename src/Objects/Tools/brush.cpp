@@ -31,7 +31,7 @@ Stroke* Brush::startStroke(double x, double y) {
 void Brush::endStroke() {
     if (!stroke) return;
 
-    stroke->points.shrink_to_fit(); // Remove any excess spots we had
+    stroke->shrinkwrap(); // Remove any excess spots we had
     if (storedPoint) {
         delete storedPoint;
         storedPoint = nullptr;

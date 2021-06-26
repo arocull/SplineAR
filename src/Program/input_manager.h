@@ -3,7 +3,7 @@
 #include "src/config.h"
 
 #ifdef DEBUG
-    #include <stdio.h>
+    #include <cstdio>
 #endif
 
 #include <CL/cl.h>

@@ -45,10 +45,15 @@ void Stroke::pullPoint(Point* point) {
     }
 }
 
-// Returns the number of points in the stroke
+// Stroke - Length - Returns the number of points in the stroke
 int Stroke::length() {
     return (int) points.size();
 }
+// Stroke - Shrinkwrap - Shrinks the points vector to fit only the number of used points
+void Stroke::shrinkwrap() {
+    points.shrink_to_fit();
+}
+
 
 
 // Returns a point from the given parametric
