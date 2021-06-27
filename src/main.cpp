@@ -22,6 +22,7 @@
 #include "src/Render/pipeline.h"
 #include "src/Program/thread_manager.h"
 #include "src/Program/input_manager.h"
+#include "src/Program/fonts.h"
 
 #include "src/Objects/Workspace/workspace.h"
 #include "src/Objects/Art/point.h"
@@ -75,6 +76,11 @@ int main(int argc, char **argv) {
     // InputManager* inputManager = new InputManager(window.glWindow);
     InputManager::Initialize();
     InputManager::RegisterContext(window.glWindow);
+
+
+    // Set up Fonts
+    Fonts::Initialize();
+    Fonts::LoadFont(&gpu, "assets/fonts/OpenSans-Regular.ttf", 24);
 
 
     // Initialize threads
@@ -142,6 +148,9 @@ int main(int argc, char **argv) {
 
     // Close workspace
     delete workspace;
+
+    printf("Deallocating fonts");
+    Fonts::Deallocate();
 
     // Free OpenCL
     #ifndef DISABLE_GPU

@@ -148,7 +148,7 @@ void Pipeline::Close() {
     #ifdef DEBUG
         printf("\tFreeing canvas texture\n");
     #endif
-    canvas->Free();
+    delete canvas;
 
     #ifdef DEBUG
         printf("\tReleasing shader kernels and programs\n");

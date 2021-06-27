@@ -33,7 +33,7 @@ class Pipeline {
         cl_program* shaderPrograms;
         cl_kernel* shaderKernels;
 
-        bool pipelineRunning = false;
+        bool pipelineRunning = false; // TODO: Use mutex for this?
         bool canRunPipeline = true;
 
         float time = 0.0f;

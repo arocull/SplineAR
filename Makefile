@@ -1,8 +1,8 @@
 CC = g++
 LD = g++
 
-CCFLAGS=-g -O2 -pthread `pkg-config --cflags --libs glfw3 gl glu glew OpenCL`
-LDFLAGS=-g -O2 -pthread `pkg-config --cflags --libs glfw3 gl glu glew OpenCL`
+CCFLAGS=-g -O2 -pthread `pkg-config --cflags --libs glfw3 gl glu glew OpenCL freetype2`
+LDFLAGS=-g -O2 -pthread `pkg-config --cflags --libs glfw3 gl glu glew OpenCL freetype2`
 TARGET=main
 
 MODULES   := src src/Render src/Program src/Util src/Objects src/Objects/Enum src/Objects/Art src/Objects/Interface src/Objects/Input src/Objects/Tools src/Objects/Workspace

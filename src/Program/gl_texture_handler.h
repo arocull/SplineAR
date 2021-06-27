@@ -13,12 +13,16 @@
 
 class GLTextureHandler {
     public:
-        GLTextureHandler(GPU* gpu, int width, int height, int type = GL_FLOAT, int format = GL_RGBA, int colorFormat = GL_RGBA32F);
+        GLTextureHandler(GPU* gpu, int width, int height,
+            int type = GL_FLOAT, int format = GL_RGBA, int colorFormat = GL_RGBA32F,
+            int aliasing = GL_NEAREST, void* buffer = NULL
+        );
+        ~GLTextureHandler();
 
     private:
         GLuint glTexture;
         cl_mem clTexture;
-        bool inCLUse;
+        bool inCLUse; // TODO: Use mutex for this?
     
     public:
         bool BindGLTexture();
@@ -31,6 +35,4 @@ class GLTextureHandler {
         GLuint GetGL();
         cl_mem GetCL();
         cl_mem* GetCLReference();
-
-        void Free();
 };

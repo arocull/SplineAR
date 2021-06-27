@@ -40,5 +40,8 @@
     #define MaxInputSamples 600 // Number of X and Y samples of a stroke input
     #define KEYSTROKE_BUFFER_SIZE 3 // Maximum number of keystrokes that can be stored for handling at a time
 
+/* UI CONFIG */
+    #define MAX_FONTS 1 // Maximum number of fonts that can be loaded at a time
+
 #define MAX_STROKES 20 // Maximum number of brush strokes visible / simulating at a time
 #define EXPECTED_STROKE_POINTS 12 // Base, expected number of stroke points for base GPU memory allocation--lean a bit higher for this

@@ -6,29 +6,37 @@
  * or for a byte map for layering.
  * 
  * An example of a full color image that can be accessed by OpenCL would be:
- * GLTextureHandler(480, 480, gpu, GL_FLOAT, GL_RGBA, GL_RGBA32F);
+ * GLTextureHandler(gpu, 480, 480, GL_FLOAT, GL_RGBA, GL_RGBA32F);
  *
  * An example of a 2D array of bytes that cannot be accessed by OpenCL would be:
- * GLTextureHandler(480, 480, nullptr, GL_BYTE, GL_RED, GL_R8);
+ * GLTextureHandler(nullptr, 480, 480, GL_BYTE, GL_RED, GL_R8);
+ * 
+ * 
+ * Use 'buffer' if you already have a texture you want to load, rather than generating an empty one.
  * 
  * 
  * More info on GL texture formats and what they do can be found here:
  * https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
  */
-GLTextureHandler::GLTextureHandler(GPU* gpu, int width, int height, int type, int format, int colorFormat) {
+GLTextureHandler::GLTextureHandler(GPU* gpu, int width, int height, int type, int format, int colorFormat, int aliasing, void* buffer) {
     glGenTextures(1, &glTexture);
-    glBindTexture(GL_TEXTURE_2D, glTexture);
+    glBindTexture(GL_TEXTURE_2D, glTexture); // Bind texture for editing
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, colorFormat, width, height, 0, format, type, NULL);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, aliasing);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, aliasing);
+    glTexImage2D(GL_TEXTURE_2D, 0, colorFormat, width, height, 0, format, type, buffer);
+    glBindTexture(GL_TEXTURE_2D, 0); // Unbind this texture since we're done working
     glFinish();
 
     clTexture = clCreateFromGLTexture(gpu->context, CL_MEM_WRITE_ONLY, GL_TEXTURE_2D, 0, glTexture, NULL);
 
     inCLUse = false;
+}
+// Frees the texture in both OpenGL and OpenCL
+GLTextureHandler::~GLTextureHandler() {
+    clReleaseMemObject(clTexture);
+    glDeleteTextures(1, &glTexture);
 }
 
 
@@ -86,11 +94,4 @@ cl_mem GLTextureHandler::GetCL() {
 // Get a reference to the CL texture memory block for parameterization
 cl_mem* GLTextureHandler::GetCLReference() {
     return &clTexture;
-}
-
-
-// Frees the texture in both OpenGL and OpenCL
-void GLTextureHandler::Free() {
-    clReleaseMemObject(clTexture);
-    glDeleteTextures(1, &glTexture);
 }
