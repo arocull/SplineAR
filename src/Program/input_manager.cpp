@@ -130,6 +130,34 @@ void InputManager::callbackKeystroke(GLFWwindow* context, int key, int scancode,
 }
 
 
+void InputManager::clickButton(UIFrame* button, struct IEClick* event) {
+    button->click(event);
+
+    // Click event was handled, return it
+    free(event);
+}
+void InputManager::checkButtons(UIFrame** interfaces, struct IEClick* event) {
+    // Get mouse position proportional to screen
+    int windowWidth, windowHeight;
+    double mouseX, mouseY;
+    glfwGetCursorPos(context, &mouseX, &mouseY);
+    glfwGetWindowSize(context, &windowWidth, &windowHeight);
+    glm::vec2 clickPos = glm::vec2(mouseX / windowWidth, mouseY / windowHeight);
+
+    // Iterate through *all* UI frames, store any frame that is containing the click event
+    // If a new clicked frame is a child of the current stored UI frame, replace the stored frame
+    // If a new clicked frame is a parent of the given current stored frame, ignore it (need hierchary check function)
+
+    // If a later on a new element is overlapping the current one, and there is no relationship, pick the new one
+    // - Being lower in the list currently acts as our Z-Index method
+
+    // interfaces[0]->containsPosition(clickPos);
+}
+void InputManager::checkMousedown(UIFrame** interfaces) {
+
+}
+
+
 // DEBUG //
 #ifdef DEBUG
 void InputManager::DEBUG_Print_Keystroke(Keystroke* state) {

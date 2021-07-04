@@ -11,6 +11,8 @@
 
 #include <GL/gl.h>
 
+#include "Objects/Input/click.h"
+
 // UI Frame - Base class for all UI elements
 class UIFrame {
     public:
@@ -25,6 +27,7 @@ class UIFrame {
         UIFrame* getParent();
 
         bool lockAspect; // If true, locks the dimensions of the button to lowest of X or Y screen width
+        bool interactable; // If true,
 
     private:
         glm::vec2 position;
@@ -47,4 +50,6 @@ class UIFrame {
 
         void draw(glm::vec2 screenDimensions);
         bool containsPosition(glm::vec2 testPosition);
+
+        void click(struct IEClick *event);
 };

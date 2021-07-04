@@ -6,6 +6,7 @@
     #include <cstdio>
 #endif
 
+#include <glm/vec2.hpp>
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
 #include <GL/glew.h>
@@ -14,6 +15,8 @@
 
 #include "src/Objects/Tools/brush.h"
 #include "src/Objects/Input/keystroke.h"
+#include "src/Objects/Input/click.h"
+#include "src/Objects/Interface/uiframe.h"
 
 namespace InputManager {
     // OVERALL //
@@ -32,11 +35,16 @@ namespace InputManager {
     Stroke* tickInput();
     void forceEndStroke();
 
-    // GLOBAL VARIABLES //
+    // KEYSTROKES //
     extern Keystroke** keystrokes;
     void appendKeystroke(Keystroke* keystroke);
     void handleKeystroke(int index);
     void callbackKeystroke(GLFWwindow* context, int key, int scancode, int action, int modifiers);
+
+    // UI BUTTONS //
+    void clickButton(UIFrame* button, struct IEClick* event);
+    void checkButtons(UIFrame** interfaces, struct IEClick* event);
+    void checkMousedown(UIFrame** interfaces);
     
     // DEBUG UTILS //
     #ifdef DEBUG

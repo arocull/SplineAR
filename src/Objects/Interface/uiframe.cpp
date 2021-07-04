@@ -87,3 +87,8 @@ void UIFrame::paint() {
 
     glEnd();
 }
+
+
+void UIFrame::click(struct IEClick *event) {
+    
+}
