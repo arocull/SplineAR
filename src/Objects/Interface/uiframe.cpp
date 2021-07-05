@@ -26,6 +26,15 @@ glm::vec2 UIFrame::getPosition() { return position; }
 glm::vec2 UIFrame::getScale() { return scale; }
 glm::vec4 UIFrame::getColor() { return color; }
 UIFrame* UIFrame::getParent() { return parent; }
+// Checks the ancestry of this UIFrame until it finds the given ancestor, or reaches end of lineage
+bool UIFrame::isParentedBy(UIFrame* ancestor) {
+    UIFrame* selected = getParent();
+    while (nullptr != ancestor && nullptr != selected) { // Loop until there is no ancestor
+        if (parent == ancestor) return true; // Return true if this is our ancestor
+        selected = selected->getParent();
+    }
+    return false;
+}
 
 
 glm::vec2 UIFrame::getComputedPosition() {
@@ -80,15 +89,29 @@ void UIFrame::paint() {
     glColor4f(color.r, color.g, color.b, color.a);
     glBegin(GL_QUADS);
     
-    glVertex2f(computedPosition.x, computedPosition.y);
-    glVertex2f(corner.x, computedPosition.y);
-    glVertex2f(corner.x, corner.y);
-    glVertex2f(computedPosition.x, corner.y);
+    glVertex2f(computedPosition.x, 1 - computedPosition.y);
+    glVertex2f(corner.x, 1 - computedPosition.y);
+    glVertex2f(corner.x, 1 - corner.y);
+    glVertex2f(computedPosition.x, 1 - corner.y);
 
     glEnd();
 }
 
-
+// The mouse is hovering over the button, but not pressed
+void UIFrame::hover() {
+    #ifdef DEBUG
+        printf("Hovering a button\n");
+    #endif
+}
+// The mouse is hovering the button, and is down
+void UIFrame::hoverMousedown() {
+    #ifdef DEBUG
+        printf("Hovering a button with mousdown\n");
+    #endif
+}
+// The mouse has just released over the button, registering as a click
 void UIFrame::click(struct IEClick *event) {
-    
+    #ifdef DEBUG
+        printf("Pressed a button!\n");
+    #endif
 }

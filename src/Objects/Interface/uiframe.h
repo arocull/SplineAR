@@ -25,6 +25,7 @@ class UIFrame {
         glm::vec2 getScale();
         glm::vec4 getColor();
         UIFrame* getParent();
+        bool isParentedBy(UIFrame* ancenstor);
 
         bool lockAspect; // If true, locks the dimensions of the button to lowest of X or Y screen width
         bool interactable; // If true,
@@ -51,5 +52,7 @@ class UIFrame {
         void draw(glm::vec2 screenDimensions);
         bool containsPosition(glm::vec2 testPosition);
 
+        void hover();
+        void hoverMousedown();
         void click(struct IEClick *event);
 };

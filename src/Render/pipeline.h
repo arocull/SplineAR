@@ -2,6 +2,8 @@
 
 #include "src/config.h"
 
+#include <vector>
+
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/vec2.hpp>
@@ -50,13 +52,13 @@ class Pipeline {
         void Close();
 
         // Runs the graphics pipeline--Goes from OpenGL, to OpenCL, to buffer swap
-        void RunPipeline(float DeltaTime, Stroke** strokes, UIFrame** interfaces);
+        void RunPipeline(float DeltaTime, Stroke** strokes, std::vector<UIFrame*> interfaces);
 
     protected:
         // Start pipeline -- runs initial setup, buffer clears, applies camera transforms, etc
         void StartFrame(Stroke** strokes, int width, int height);
         // Run GL and CL pipelines
-        void MidFrame(Stroke** strokes, int width, int height, UIFrame** interfaces);
+        void MidFrame(Stroke** strokes, int width, int height, std::vector<UIFrame*> interfaces);
         // Swaps buffers and pops out of matrix transforms
         void EndFrame();
 };

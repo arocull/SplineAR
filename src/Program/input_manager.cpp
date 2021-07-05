@@ -4,6 +4,7 @@ GLFWwindow* InputManager::context;
 Brush* InputManager::brush = nullptr;
 bool InputManager::mouseWasDown = false;
 Keystroke** InputManager::keystrokes = nullptr;
+bool InputManager::mouseWasDownUI = false;
 
 void InputManager::Initialize() {
 
@@ -79,6 +80,8 @@ void InputManager::forceEndStroke() {
 
 
 // KEYSTROKES //
+
+// Append Keystroke - Appends the given keystroke to the keystroke array
 void InputManager::appendKeystroke(Keystroke* keystroke) {
     #ifdef DEBUG_VERBOSE
         printf("Inputted ");
@@ -96,6 +99,7 @@ void InputManager::appendKeystroke(Keystroke* keystroke) {
     handleKeystroke(0);
     keystrokes[0] = keystroke;
 }
+// Marks the given keystroke as handled, and frees it
 void InputManager::handleKeystroke(int index) {
     if (keystrokes[index]) {
         #ifdef DEBUG_VERBOSE
@@ -107,6 +111,8 @@ void InputManager::handleKeystroke(int index) {
         keystrokes[index] = nullptr;
     }
 }
+// Callback function for GLFW's input function, adds the given item to the keystrokes array
+// TODO: Does this need a mutex?
 void InputManager::callbackKeystroke(GLFWwindow* context, int key, int scancode, int action, int modifiers) {
     if (action == GLFW_RELEASE) return; // Don't record inputs for released keys
     if (action == GLFW_REPEAT) return; // Don't record inputs for repeated keys
@@ -129,14 +135,15 @@ void InputManager::callbackKeystroke(GLFWwindow* context, int key, int scancode,
     InputManager::appendKeystroke(state);
 }
 
-
+// Clicks the given interface button
 void InputManager::clickButton(UIFrame* button, struct IEClick* event) {
     button->click(event);
 
     // Click event was handled, return it
     free(event);
 }
-void InputManager::checkButtons(UIFrame** interfaces, struct IEClick* event) {
+// Sorts through the given interface array, and returns the current button that the mouse cursor is over
+UIFrame* InputManager::checkButton(std::vector<UIFrame*> interfaces) {
     // Get mouse position proportional to screen
     int windowWidth, windowHeight;
     double mouseX, mouseY;
@@ -151,10 +158,33 @@ void InputManager::checkButtons(UIFrame** interfaces, struct IEClick* event) {
     // If a later on a new element is overlapping the current one, and there is no relationship, pick the new one
     // - Being lower in the list currently acts as our Z-Index method
 
-    // interfaces[0]->containsPosition(clickPos);
-}
-void InputManager::checkMousedown(UIFrame** interfaces) {
+    UIFrame* selected = nullptr;
+    for (int i = 0; i < interfaces.size(); i++) {
+        if (
+            interfaces[i] == nullptr ||
+            !interfaces[i]->interactable ||
+            !interfaces[i]->containsPosition(clickPos)
+        ) { continue; } // Ignore non-existant / non-interactable / non-clicked frames
 
+        if (nullptr == selected) { selected = interfaces[i]; } // Take first oprtion if one has not been selected yet
+        else if (interfaces[i]->isParentedBy(selected)) { selected = interfaces[i]; } // New parent
+        else if (selected->isParentedBy(interfaces[i])) { continue; } // Currently selected frame is parented by us, ignore
+        else { selected = interfaces[i]; } // If no relationship is present, overrite earlier UI frames, as new ones have higher Z Index order
+    }
+
+    return selected;
+}
+InputManager::MouseState InputManager::checkMouseState() {
+    bool mouseDown = glfwGetMouseButton(context, GLFW_MOUSE_BUTTON_LEFT);
+    InputManager::MouseState state;
+
+    if (mouseDown && !mouseWasDownUI) { state = InputManager::MouseState::EI_MS_JustPressed; }
+    else if (!mouseDown && mouseWasDownUI) { state = InputManager::MouseState::EI_MS_JustReleased; }
+    else if (mouseDown) { state = InputManager::MouseState::EI_MS_Pressed; }
+    else state = InputManager::MouseState::EI_MS_Released;
+
+    mouseWasDownUI = mouseDown;
+    return state;
 }
 
 

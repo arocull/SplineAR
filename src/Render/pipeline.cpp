@@ -169,7 +169,7 @@ void Pipeline::Close() {
 }
 
 
-void Pipeline::RunPipeline(float DeltaTime, Stroke** strokes, UIFrame** interfaces) {
+void Pipeline::RunPipeline(float DeltaTime, Stroke** strokes, std::vector<UIFrame*> interfaces) {
     if (!canRunPipeline || pipelineRunning) return;
     pipelineRunning = true;
 
@@ -283,7 +283,7 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
         printf("Start Frame process finished!\n");
     #endif
 }
-void Pipeline::MidFrame(Stroke** strokes, int width, int height, UIFrame** interfaces) {
+void Pipeline::MidFrame(Stroke** strokes, int width, int height, std::vector<UIFrame*> interfaces) {
     // Fetch OpenGL objects for use in OpenCL
     canvas->HoldCLTexture(gpu);
 
@@ -356,11 +356,11 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height, UIFrame** inter
     // Reset canvas to ignore aspect ratio, for drawing UI
     // glMatrixMode(GL_PROJECTION);
     // glLoadIdentity();
-    // glOrtho(0, 1, 0, 1, 0, 10);
+    // glOrtho(0, 1, 0, -1, 0, 10);
     // glMatrixMode(GL_MODELVIEW);
     // glLoadIdentity();
     // glClear( GL_DEPTH_BUFFER_BIT );
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < interfaces.size(); i++) {
         if (interfaces[i]) {
             interfaces[i]->draw(glm::vec2(1, 1));
         }

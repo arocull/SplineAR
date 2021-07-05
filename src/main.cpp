@@ -3,17 +3,18 @@
 
 #include "src/config.h"
 
+#include <cstdlib>
+#include <cstdio>
+#include <time.h>
+#include <math.h>
+#include <vector>
+
 #include <CL/cl.h>
 #include <CL/cl_gl.h>
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/vec3.hpp>
-
-#include <cstdlib>
-#include <cstdio>
-#include <time.h>
-#include <math.h>
 
 #include "src/Objects/Enum/enums.h"
 
@@ -28,7 +29,6 @@
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 #include "src/Objects/Tools/brush.h"
-
 #include "src/Objects/Interface/uiframe.h"
 
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
@@ -92,12 +92,11 @@ int main(int argc, char **argv) {
     window.UpdateTitle(workspace->getName(), workspace->getMode());
 
     // TODO: UI Manager class
-    UIFrame** interfaces = (UIFrame**) calloc(5, sizeof(UIFrame*));
-    for (int i = 0; i < 5; i++) {
-        interfaces[i] = nullptr;
-    }
-    interfaces[0] = new UIFrame();
-    interfaces[0]->setPositionScale(glm::vec2(0.05, 0.05), glm::vec2(0.1, 0.1));
+    std::vector<UIFrame*> interfaces = std::vector<UIFrame*>();
+    UIFrame* basicInterface = new UIFrame();
+    basicInterface->setPositionScale(glm::vec2(0.05, 0.05), glm::vec2(0.1, 0.1));
+    basicInterface->interactable = true;
+    interfaces.push_back(basicInterface);
 
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -134,6 +133,24 @@ int main(int argc, char **argv) {
             }
         }
 
+        int mouseState = InputManager::checkMouseState();
+        UIFrame* uiButton = InputManager::checkButton(interfaces);
+        if (uiButton) {
+            switch (mouseState) {
+                case InputManager::MouseState::EI_MS_JustReleased:
+                    InputManager::clickButton(uiButton, new IEClick());
+                    break;
+                case InputManager::MouseState::EI_MS_JustPressed:
+                case InputManager::MouseState::EI_MS_Pressed:
+                    uiButton->hoverMousedown();
+                    break;
+                case InputManager::MouseState::EI_MS_Released:
+                default:
+                    uiButton->hover();
+            }
+        }
+
+
         window.checkResizing();
         #ifndef DISABLE_GPU
         pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw), interfaces);
@@ -142,9 +159,10 @@ int main(int argc, char **argv) {
     printf("Loop ended. Closing program...\n");
 
     // Disable UI
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < interfaces.size(); i++) {
         if (interfaces[i]) delete interfaces[i];
     }
+    interfaces.clear();
 
     // Close workspace
     delete workspace;
