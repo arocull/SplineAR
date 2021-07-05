@@ -9,6 +9,7 @@ UIFrame::UIFrame() {
     color = glm::vec4(1, 1, 1, 1);
     parent = nullptr;
     lockAspect = false;
+    zindex = 0;
 }
 
 // GETTERS / SETTERS //

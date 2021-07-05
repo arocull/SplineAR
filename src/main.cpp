@@ -24,6 +24,7 @@
 #include "src/Program/thread_manager.h"
 #include "src/Program/input_manager.h"
 #include "src/Program/fonts.h"
+#include "src/Program/ui_manager.h"
 
 #include "src/Objects/Workspace/workspace.h"
 #include "src/Objects/Art/point.h"
@@ -91,12 +92,16 @@ int main(int argc, char **argv) {
     Workspace* workspace = new Workspace("NewWorkspace");
     window.UpdateTitle(workspace->getName(), workspace->getMode());
 
-    // TODO: UI Manager class
-    std::vector<UIFrame*> interfaces = std::vector<UIFrame*>();
+    // Create UI manager
+    UIManager* ui = new UIManager();
+
     UIFrame* basicInterface = new UIFrame();
     basicInterface->setPositionScale(glm::vec2(0.05, 0.05), glm::vec2(0.1, 0.1));
     basicInterface->interactable = true;
-    interfaces.push_back(basicInterface);
+    
+    ui->addInterface(basicInterface);
+    printf("UI array size%i\n", ui->getInterfaces().size());
+    ui->collapseInterfaces();
 
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -134,7 +139,7 @@ int main(int argc, char **argv) {
         }
 
         int mouseState = InputManager::checkMouseState();
-        UIFrame* uiButton = InputManager::checkButton(interfaces);
+        UIFrame* uiButton = InputManager::checkButton(ui->getInterfaces());
         if (uiButton) {
             switch (mouseState) {
                 case InputManager::MouseState::EI_MS_JustReleased:
@@ -153,16 +158,13 @@ int main(int argc, char **argv) {
 
         window.checkResizing();
         #ifndef DISABLE_GPU
-        pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw), interfaces);
+        pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw), ui->getInterfaces());
         #endif
     }
     printf("Loop ended. Closing program...\n");
 
     // Disable UI
-    for (int i = 0; i < interfaces.size(); i++) {
-        if (interfaces[i]) delete interfaces[i];
-    }
-    interfaces.clear();
+    delete ui;
 
     // Close workspace
     delete workspace;

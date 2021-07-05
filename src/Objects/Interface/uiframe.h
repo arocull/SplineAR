@@ -29,6 +29,7 @@ class UIFrame {
 
         bool lockAspect; // If true, locks the dimensions of the button to lowest of X or Y screen width
         bool interactable; // If true,
+        int zindex; // Z-Index of UI item
 
     private:
         glm::vec2 position;
