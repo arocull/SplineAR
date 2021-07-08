@@ -2,6 +2,8 @@
 
 #include <vector>
 
+// TODO: Make take a void* array input, swap the nullptrs, and return the collapsed array with a deletion point?
+// NOTE: DOES NOT WORK AS OF RIGHT NOW AS A TEMPLATE, see UI Manager -> Collapse Interfaces
 template <typename T> void VECTOR_collapse(std::vector<T> vect) {
     if (vect.size() == 0) { return; }
 

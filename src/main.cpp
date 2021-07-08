@@ -95,13 +95,15 @@ int main(int argc, char **argv) {
     // Create UI manager
     UIManager* ui = new UIManager();
 
-    UIFrame* basicInterface = new UIFrame();
-    basicInterface->setPositionScale(glm::vec2(0.05, 0.05), glm::vec2(0.1, 0.1));
-    basicInterface->interactable = true;
-    
-    ui->addInterface(basicInterface);
-    printf("UI array size%i\n", ui->getInterfaces().size());
-    ui->collapseInterfaces();
+    UIFrame* basicInterface1 = new UIFrame();
+    basicInterface1->setPositionScale(glm::vec2(0.0, 0.0), glm::vec2(0.1, 0.05));
+    basicInterface1->interactable = true;
+    ui->addInterface(basicInterface1);
+
+    UIFrame* basicInterface2 = new UIFrame();
+    basicInterface2->setPositionScale(glm::vec2(0.1, 0.0), glm::vec2(0.1, 0.05));
+    basicInterface2->interactable = true;
+    ui->addInterface(basicInterface2);
 
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -138,12 +140,19 @@ int main(int argc, char **argv) {
             }
         }
 
+        // Get mouse info
+        double mouseX, mouseY;
+        int windowWidth, windowHeight;
+        InputManager::getMousePosition(&mouseX, &mouseY, &windowWidth, &windowHeight);
         int mouseState = InputManager::checkMouseState();
-        UIFrame* uiButton = InputManager::checkButton(ui->getInterfaces());
+
+        // Interface
+        // TODO: Do not draw strokes if clicking on interface
+        UIFrame* uiButton = ui->checkButtons(mouseX, mouseY, windowWidth, windowHeight);
         if (uiButton) {
             switch (mouseState) {
                 case InputManager::MouseState::EI_MS_JustReleased:
-                    InputManager::clickButton(uiButton, new IEClick());
+                    ui->clickButton(uiButton, new IEClick());
                     break;
                 case InputManager::MouseState::EI_MS_JustPressed:
                 case InputManager::MouseState::EI_MS_Pressed:

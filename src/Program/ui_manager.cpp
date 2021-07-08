@@ -17,7 +17,7 @@ UIManager::~UIManager() {
 }
 
 
-// Get Interfaces - Returns the vector array of UI Frames
+// Get Interfaces - Returns a copy of the vector array of UI Frames
 std::vector<UIFrame*> UIManager::getInterfaces() { return interfaces; }
 // Add Interface - Adds the given UI Frame to the vector array, based off the given ZIndex
 // - If the given ZIndex is -1, it will append it to the end of the array
@@ -46,9 +46,9 @@ void UIManager::addInterface(UIFrame* item, int zindex) {
     // If we got to the end of the array, just push the new item (Z Index is greater than all currently there)
     interfaces.push_back(item);
 }
-// Removes all nullptrs from the vector array and calls shrink_to_fit
+// Pushes variables to the front of the array, deletes all nullptrs from the vector array, and calls shrink_to_fit
 void UIManager::collapseInterfaces() {
-    /* if (interfaces.size() == 0) { return; }
+    if (interfaces.size() == 0) { return; }
 
     // Index of the last nullptr we found in the array
     bool foundNullptr = false;
@@ -76,9 +76,46 @@ void UIManager::collapseInterfaces() {
     if (foundNullptr) { // If we found a nullptr, remove all nullptr elements, and then shrink memory to fit elements
         interfaces.erase(interfaces.begin() + lastNullptr, interfaces.end());
         interfaces.shrink_to_fit();
-    } */
+    }
 
-    VECTOR_collapse(interfaces);
+    //VECTOR_collapse(interfaces);
+}
+
+
+// Clicks the given interface button
+void UIManager::clickButton(UIFrame* button, struct IEClick* event) {
+    button->click(event);
+
+    // Click event was handled, return it
+    free(event);
+}
+// Sorts through the given interface array, and returns the current button that the mouse cursor is over
+UIFrame* UIManager::checkButtons(double mouseX, double mouseY, int windowWidth, int windowHeight) {
+    // Get mouse position proportional to screen
+    glm::vec2 clickPos = glm::vec2(mouseX / windowWidth, mouseY / windowHeight);
+
+    // Iterate through *all* UI frames, store any frame that is containing the click event
+    // If a new clicked frame is a child of the current stored UI frame, replace the stored frame
+    // If a new clicked frame is a parent of the given current stored frame, ignore it (need hierchary check function)
+
+    // If a later on a new element is overlapping the current one, and there is no relationship, pick the new one
+    // - Being lower in the list currently acts as our Z-Index method
+
+    UIFrame* selected = nullptr;
+    for (int i = 0; i < interfaces.size(); i++) {
+        if (
+            interfaces[i] == nullptr ||
+            !interfaces[i]->interactable ||
+            !interfaces[i]->containsPosition(clickPos)
+        ) { continue; } // Ignore non-existant / non-interactable / non-clicked frames
+
+        if (nullptr == selected) { selected = interfaces[i]; } // Take first oprtion if one has not been selected yet
+        else if (interfaces[i]->isParentedBy(selected)) { selected = interfaces[i]; } // New parent
+        else if (selected->isParentedBy(interfaces[i])) { continue; } // Currently selected frame is parented by us, ignore
+        else { selected = interfaces[i]; } // If no relationship is present, overrite earlier UI frames, as new ones have higher Z Index order
+    }
+
+    return selected;
 }
 
 

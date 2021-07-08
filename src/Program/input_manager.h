@@ -12,7 +12,6 @@
 #include "src/Objects/Tools/brush.h"
 #include "src/Objects/Input/keystroke.h"
 #include "src/Objects/Input/click.h"
-#include "src/Objects/Interface/uiframe.h"
 
 // Input Manager - Global namespace used for keeping track of inputs
 namespace InputManager {
@@ -51,8 +50,7 @@ namespace InputManager {
 
     // UI BUTTONS //
     extern bool mouseWasDownUI;
-    void clickButton(UIFrame* button, struct IEClick* event);
-    UIFrame* checkButton(std::vector<UIFrame*> interfaces);
+    void getMousePosition(double *mouseX, double *mouseY, int *windowWidth, int *windowHeight);
     InputManager::MouseState checkMouseState();
     
     // DEBUG UTILS //

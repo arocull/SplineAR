@@ -100,15 +100,11 @@ void UIFrame::paint() {
 
 // The mouse is hovering over the button, but not pressed
 void UIFrame::hover() {
-    #ifdef DEBUG
-        printf("Hovering a button\n");
-    #endif
+    
 }
 // The mouse is hovering the button, and is down
 void UIFrame::hoverMousedown() {
-    #ifdef DEBUG
-        printf("Hovering a button with mousdown\n");
-    #endif
+    
 }
 // The mouse has just released over the button, registering as a click
 void UIFrame::click(struct IEClick *event) {
