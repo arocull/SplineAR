@@ -32,6 +32,8 @@
 #include "src/Objects/Tools/brush.h"
 #include "src/Objects/Interface/uiframe.h"
 
+#include "src/Render/shader/shader_gl.h"
+
 // https://software.intel.com/content/www/us/en/develop/articles/opencl-and-opengl-interoperability-tutorial.html
 int main(int argc, char **argv) {
     // Initialize openGL and PWindow
@@ -105,6 +107,12 @@ int main(int argc, char **argv) {
     basicInterface2->interactable = true;
     ui->addInterface(basicInterface2);
 
+    ShaderGL* shaderTest = new ShaderGL();
+    shaderTest->attachKernel("src/Render/gl_shaders/font.vert", GL_VERTEX_SHADER);
+    shaderTest->attachKernel("src/Render/gl_shaders/font.frag", GL_FRAGMENT_SHADER);
+    shaderTest->build();
+    delete shaderTest;
+
     // Set up clock for delta time fetching
     timespec lastTime;
     timespec currentTime;
@@ -131,15 +139,6 @@ int main(int argc, char **argv) {
 
         workspace->tick(DeltaTime);
 
-        Stroke* newStroke = InputManager::tickInput(); // Tick stroke input, recieve new stroke if new one was created
-        if (newStroke) { // If a stroke was created, go through all strokes and fill the next one with this one
-            bool placed = workspace->addStroke(newStroke);
-            if (!placed) { // If we are unable to place the stroke, forcibly end the stroke and delete it
-                InputManager::forceEndStroke();
-                delete newStroke;
-            }
-        }
-
         // Get mouse info
         double mouseX, mouseY;
         int windowWidth, windowHeight;
@@ -147,10 +146,9 @@ int main(int argc, char **argv) {
         int mouseState = InputManager::checkMouseState();
 
         // Interface
-        // TODO: Do not draw strokes if clicking on interface
         UIFrame* uiButton = ui->checkButtons(mouseX, mouseY, windowWidth, windowHeight);
-        if (uiButton) {
-            switch (mouseState) {
+        if (uiButton) { // If we pressed a button
+            switch (mouseState) { // Interact with button based off mouse state
                 case InputManager::MouseState::EI_MS_JustReleased:
                     ui->clickButton(uiButton, new IEClick());
                     break;
@@ -161,6 +159,15 @@ int main(int argc, char **argv) {
                 case InputManager::MouseState::EI_MS_Released:
                 default:
                     uiButton->hover();
+            }
+        } else { // Otherwise, draw a stroke
+            Stroke* newStroke = InputManager::tickInput(); // Tick stroke input, recieve new stroke if new one was created
+            if (newStroke) { // If a stroke was created, go through all strokes and fill the next one with this one
+                bool placed = workspace->addStroke(newStroke);
+                if (!placed) { // If we are unable to place the stroke, forcibly end the stroke and delete it
+                    InputManager::forceEndStroke();
+                    delete newStroke;
+                }
             }
         }
 

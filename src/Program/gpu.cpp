@@ -45,7 +45,7 @@ GPU::GPU() {
         }
     } */
 
-    // GLX is Linux-only
+    // TODO: GLX is Linux-only
     cl_context_properties props[] = {
         CL_CONTEXT_PLATFORM, (cl_context_properties) platformID,
         CL_GL_CONTEXT_KHR, (cl_context_properties) glXGetCurrentContext(),
