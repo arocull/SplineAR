@@ -21,4 +21,5 @@ class UILabel : public UIFrame {
         bool hasText;
 
         void freeText();
+        void paint() override;
 };

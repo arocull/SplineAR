@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 
     // Set up Fonts
     Fonts::Initialize();
-    Fonts::LoadFont(&gpu, "assets/fonts/OpenSans-Regular.ttf", 24);
+    Fonts::LoadFont(&gpu, "assets/fonts/OpenSans-Regular.ttf", 48);
 
 
     // Initialize threads
@@ -111,7 +111,6 @@ int main(int argc, char **argv) {
     shaderTest->attachKernel("src/Render/gl_shaders/font.vert", GL_VERTEX_SHADER);
     shaderTest->attachKernel("src/Render/gl_shaders/font.frag", GL_FRAGMENT_SHADER);
     shaderTest->build();
-    delete shaderTest;
 
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -175,9 +174,13 @@ int main(int argc, char **argv) {
         window.checkResizing();
         #ifndef DISABLE_GPU
         pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw), ui->getInterfaces());
+        pipeline.RenderText(shaderTest, "hi this is a test", glm::vec2(25.0f, 25.0f), 24.0f, glm::vec3(0, 0, 0), Fonts::fonts[0]);
         #endif
+        glfwSwapBuffers(window.getGLWindow());
     }
     printf("Loop ended. Closing program...\n");
+
+    delete shaderTest;
 
     // Disable UI
     delete ui;

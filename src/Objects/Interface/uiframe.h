@@ -44,7 +44,7 @@ class UIFrame {
         glm::vec2 computedScale;
 
         void computeBounds(glm::vec2 screenDimensions);
-        void paint();
+        virtual void paint();
     
     public:
         glm::vec2 getComputedPosition();

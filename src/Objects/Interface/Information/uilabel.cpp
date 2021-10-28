@@ -23,3 +23,6 @@ void UILabel::freeText() {
         hasText = false;
     }
 }
+void UILabel::paint() {
+    UIFrame::paint();
+}

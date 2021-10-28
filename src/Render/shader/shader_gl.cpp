@@ -32,6 +32,8 @@ bool ShaderGL::attachKernel(std::string filepath, int flags) {
         return false;
     }
 
+    shaders.push_back(shader);
+
     return true;
 }
 // Build - Builds the shader program, will delete a previous program if it existed
@@ -65,7 +67,7 @@ bool ShaderGL::build() {
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLength);
         std::vector<char> programError( (logLength > 1) ? logLength : 1 );
         glGetProgramInfoLog(program, logLength, NULL, &programError[0]);
-        std::cout  << "ERROR while compiling GL program\t" << &programError[0] << std::endl;
+        std::cout  << "ERROR while linking GL program\t" << &programError[0] << std::endl;
         return false;
     }
 

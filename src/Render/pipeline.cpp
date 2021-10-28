@@ -97,6 +97,17 @@ Pipeline::Pipeline(GPU* pipelineGPU, PWindow* programWindow) {
     #ifdef DEBUG
         printf("Pipeline setup complete!\n");
     #endif
+
+    // TODO: Write handler for this
+    glGenVertexArrays(1, &FontVertexArray);
+    glGenBuffers(1, &FontVertexBuffer);
+    glBindVertexArray(FontVertexArray);
+    glBindBuffer(GL_ARRAY_BUFFER, FontVertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 6 * 4, NULL, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);  
 }
 
 void Pipeline::SetupContext() {
@@ -188,6 +199,7 @@ void Pipeline::StartFrame(Stroke** strokes, int width, int height) {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     // glClearDepth(10.0f);
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+    glUseProgram(0); // Disable all GL Shader Programs
 
     double windowAspect = (double) width / (double) height;
 
@@ -353,13 +365,6 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height, std::vector<UIF
         }
     }*/
 
-    // Reset canvas to ignore aspect ratio, for drawing UI
-    // glMatrixMode(GL_PROJECTION);
-    // glLoadIdentity();
-    // glOrtho(0, 1, 0, -1, 0, 10);
-    // glMatrixMode(GL_MODELVIEW);
-    // glLoadIdentity();
-    // glClear( GL_DEPTH_BUFFER_BIT );
     for (int i = 0; i < interfaces.size(); i++) {
         if (interfaces[i]) {
             interfaces[i]->draw(glm::vec2(1, 1));
@@ -372,5 +377,73 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height, std::vector<UIF
     #endif
 }
 void Pipeline::EndFrame() {
-    glfwSwapBuffers(window->getGLWindow());
+    /// glfwSwapBuffers(window->getGLWindow());
+
+    // glMatrixMode(GL_PROJECTION);
+    // glLoadIdentity();
+    // glOrtho(0, (double) window->getViewWidth(), 0, (double) window->getViewHeight(), 0, 10); // TODO: Make left side and right side of windowAspect centered
+    // glMatrixMode(GL_MODELVIEW);
+    // glLoadIdentity();
+}
+
+
+void Pipeline::RenderText(ShaderGL* shader, std::string text, glm::vec2 pos, float scale, glm::vec3 color, Fonts::FFont* font) {
+    float width = window->getViewWidth();
+    float height = window->getViewHeight();
+    glOrtho(0, (double) window->getViewWidth(), 0, (double) window->getViewHeight(), -1, 10);
+
+    glDisable(GL_DEPTH_TEST | GL_CULL_FACE | GL_ALPHA_TEST);
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glBegin(GL_QUADS);
+    glVertex2d(pos.x, pos.y);
+    glVertex2d(pos.x + scale, pos.y);
+    glVertex2d(pos.x + scale, pos.y + scale);
+    glVertex2d(pos.x, pos.y + scale);
+    glEnd();
+
+    // std::cout << window->getViewWidth() << ", " << window->getViewHeight() << "\n";
+    // std::cout << "Rendering text \"" << text << "\" at " << pos.x << ", " << pos.y << "\n";
+
+    glUseProgram(shader->getId());
+    glm::mat4 projection = glm::ortho(0.0f, width, 0.0f, height);
+    glUniformMatrix4fv(glGetUniformLocation(shader->getId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform3f(glGetUniformLocation(shader->getId(), "textColor"), color.x, color.y, color.z);
+    glActiveTexture(GL_TEXTURE0);
+    glBindVertexArray(FontVertexArray);
+
+    std::string::const_iterator c;
+    for (c = text.begin(); c != text.end(); c++) {
+        Fonts::FCharacter* ch = font->chars[*c];
+
+        float xpos = pos.x + ch->bearing.x * scale;
+        float ypos = pos.y - (ch->size.y - ch->bearing.y) * scale;
+
+        float w = ch->size.x * scale;
+        float h = ch->size.y * scale;
+
+        // Update Vertex Buffer for each character
+        float vertices[6][4] = {
+            { xpos,     ypos + h,   0.0f, 0.0f },
+            { xpos,     ypos,       0.0f, 1.0f },
+            { xpos + w, ypos,       1.0f, 1.0f },
+
+            { xpos,     ypos + h,   0.0f, 0.0f },
+            { xpos + w, ypos,       1.0f, 1.0f },
+            { xpos + w, ypos + h,   1.0f, 0.0f }
+        };
+        // Render glyph texture over quad
+        ch->texture->BindGLTexture();
+        // Update content of Vertex Buffer memory
+        glBindBuffer(GL_ARRAY_BUFFER, FontVertexBuffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        // Render quad
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
+        pos.x += (ch->advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
+    }
+
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }

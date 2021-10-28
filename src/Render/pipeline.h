@@ -4,14 +4,19 @@
 
 #include <vector>
 
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
+#include "src/Util/gl_headers.h"
+#include <glm/glm.hpp>
 #include <glm/vec2.hpp>
+#include <glm/mat4x4.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "src/Program/window.h"
 #include "src/Program/gpu.h"
 #include "src/Program/gpu_memory.h"
 #include "src/Program/gl_texture_handler.h"
+#include "src/Render/shader/shader_gl.h"
+#include "src/Program/fonts.h"
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 #include "src/Objects/Interface/uiframe.h"
@@ -45,6 +50,9 @@ class Pipeline {
         GPUMemory** strokeData;
         GPUMemory* strokeOutlineIndices;
 
+        GLuint FontVertexArray;
+        GLuint FontVertexBuffer;
+
     public:
         // Performs basic setup for GLFW window
         void SetupContext();
@@ -53,6 +61,8 @@ class Pipeline {
 
         // Runs the graphics pipeline--Goes from OpenGL, to OpenCL, to buffer swap
         void RunPipeline(float DeltaTime, Stroke** strokes, std::vector<UIFrame*> interfaces);
+
+        void RenderText(ShaderGL* shader, std::string text, glm::vec2 pos, float scale, glm::vec3 color, Fonts::FFont* font);
 
     protected:
         // Start pipeline -- runs initial setup, buffer clears, applies camera transforms, etc
