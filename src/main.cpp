@@ -1,6 +1,7 @@
 // Written by Alan O'Cull
 // Contributions are welcome
 
+#include "src/Util/gl_headers.h"
 #include "src/config.h"
 
 #include <cstdlib>
@@ -9,11 +10,6 @@
 #include <math.h>
 #include <vector>
 
-#include <CL/cl.h>
-#include <CL/cl_gl.h>
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
 #include <glm/vec3.hpp>
 
 #include "src/Objects/Enum/enums.h"
@@ -72,17 +68,13 @@ int main(int argc, char **argv) {
     Pipeline pipeline = Pipeline(&gpu, &window);
     pipeline.SetupContext();
 
-
     // Set up input sampler
-    // InputManager* inputManager = new InputManager(window.glWindow);
     InputManager::Initialize();
     InputManager::RegisterContext(window.glWindow);
-
 
     // Set up Fonts
     Fonts::Initialize();
     Fonts::LoadFont(&gpu, "assets/fonts/OpenSans-Regular.ttf", 48);
-
 
     // Initialize threads
     // ThreadManager threads = ThreadManager(window.glWindow);
@@ -98,17 +90,17 @@ int main(int argc, char **argv) {
     UIFrame* basicInterface1 = new UIFrame();
     basicInterface1->setPositionScale(glm::vec2(0.0, 0.0), glm::vec2(0.1, 0.05));
     basicInterface1->interactable = true;
+    basicInterface1->newLabel();
+    basicInterface1->getLabel()->text = "Button 1";
     ui->addInterface(basicInterface1);
 
     UIFrame* basicInterface2 = new UIFrame();
     basicInterface2->setPositionScale(glm::vec2(0.1, 0.0), glm::vec2(0.1, 0.05));
+    basicInterface2->setColor(glm::vec4(0.9, 0.9, 0.9, 1));
     basicInterface2->interactable = true;
+    basicInterface2->newLabel();
+    basicInterface2->getLabel()->text = "Button 2";
     ui->addInterface(basicInterface2);
-
-    ShaderGL* shaderTest = new ShaderGL();
-    shaderTest->attachKernel("src/Render/gl_shaders/font.vert", GL_VERTEX_SHADER);
-    shaderTest->attachKernel("src/Render/gl_shaders/font.frag", GL_FRAGMENT_SHADER);
-    shaderTest->build();
 
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -171,30 +163,20 @@ int main(int argc, char **argv) {
 
         window.checkResizing();
         pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw), ui->getInterfaces());
-        pipeline.RenderText(shaderTest, "hi this is a test", glm::vec2(25.0f, 25.0f), 24.0f, glm::vec3(0, 0, 0), Fonts::fonts[0]);
-        glfwSwapBuffers(window.getGLWindow());
     }
     printf("Loop ended. Closing program...\n");
 
-    delete shaderTest;
-
-    // Disable UI
+    // Disable UI, close workspace, deallocate fonts
     delete ui;
-
-    // Close workspace
     delete workspace;
-
-    printf("Deallocating fonts");
     Fonts::Deallocate();
 
     // Free OpenCL
     pipeline.Close();
     gpu.Close();
 
-    printf("Deallocating input manager\n");
+    // Close input manager, window, and finally end OpenCL
     InputManager::Deallocate();
-
-    printf("Closing window\n");
     window.Close();
     glfwTerminate();
 

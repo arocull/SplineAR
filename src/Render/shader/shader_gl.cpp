@@ -73,6 +73,10 @@ bool ShaderGL::build() {
 
     return true;
 }
+// Use - Macro for glUseProgram(programID)
+void ShaderGL::use() {
+    glUseProgram(program);
+}
 
 GLuint ShaderGL::getId() {
     return program;

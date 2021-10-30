@@ -31,6 +31,10 @@ class Pipeline {
 
         GLTextureHandler* canvas;
         cl_sampler uvSampler;
+
+        ShaderGL* fontShader;
+        glm::mat4x4 fontProjection;
+
         cl_mem clTime;
         cl_mem clMEM_MaxStrokes;
         cl_mem clMEM_MaxPoints;
@@ -62,8 +66,6 @@ class Pipeline {
         // Runs the graphics pipeline--Goes from OpenGL, to OpenCL, to buffer swap
         void RunPipeline(float DeltaTime, Stroke** strokes, std::vector<UIFrame*> interfaces);
 
-        void RenderText(ShaderGL* shader, std::string text, glm::vec2 pos, float scale, glm::vec3 color, Fonts::FFont* font);
-
     protected:
         // Start pipeline -- runs initial setup, buffer clears, applies camera transforms, etc
         void StartFrame(Stroke** strokes, int width, int height);
@@ -71,4 +73,11 @@ class Pipeline {
         void MidFrame(Stroke** strokes, int width, int height, std::vector<UIFrame*> interfaces);
         // Swaps buffers and pops out of matrix transforms
         void EndFrame();
+
+        void CleanseGLState();
+
+        // Does prepwork for rendering text
+        void RenderTextMode();
+        // Renders actual text, call RenderTextMode before performing
+        void RenderText(std::string text, glm::vec2 pos, float scale, glm::vec3 color, Fonts::FFont* font);
 };

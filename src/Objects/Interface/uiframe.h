@@ -1,22 +1,18 @@
 #pragma once
 
-#include "src/config.h"
-
-#ifdef DEBUG
-#include <cstdio>
-#endif
-
+#include "src/Util/gl_headers.h"
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
 
-#include <GL/gl.h>
-
+#include "src/config.h"
 #include "Objects/Input/click.h"
+#include "Objects/Interface/Information/uilabel.h"
 
 // UI Frame - Base class for all UI elements
 class UIFrame {
     public:
         UIFrame();
+        ~UIFrame();
 
         void setPositionScale(glm::vec2 pos, glm::vec2 size);
         void setColor(glm::vec4 col);
@@ -31,6 +27,9 @@ class UIFrame {
         bool interactable; // If true,
         int zindex; // Z-Index of UI item
 
+        void newLabel();
+        UILabel* getLabel();
+
     private:
         glm::vec2 position;
         glm::vec2 scale;
@@ -38,7 +37,7 @@ class UIFrame {
         glm::vec4 color;
 
         UIFrame* parent; // Parent of this frame, should be drawn first
-
+        UILabel* label;
 
         glm::vec2 computedPosition;
         glm::vec2 computedScale;

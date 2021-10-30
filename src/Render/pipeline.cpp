@@ -14,6 +14,12 @@ Pipeline::Pipeline(GPU* pipelineGPU, PWindow* programWindow) {
 
     // Generate Canvas Texture and Pipe into OpenCL
     canvas = new GLTextureHandler(gpu, WindowWidth, WindowHeight);
+    
+    // Build font shader for text rendering
+    fontShader = new ShaderGL();
+    fontShader->attachKernel("src/Render/gl_shaders/font.vert", GL_VERTEX_SHADER);
+    fontShader->attachKernel("src/Render/gl_shaders/font.frag", GL_FRAGMENT_SHADER);
+    fontShader->build();
 
     #ifdef DEBUG_VERBOSE
         printf("Created and linked canvas texture for OpenGL and OpenCL\n");
@@ -365,11 +371,31 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height, std::vector<UIF
         }
     }*/
 
+
+    // Draw interface backgrounds
     for (int i = 0; i < interfaces.size(); i++) {
         if (interfaces[i]) {
             interfaces[i]->draw(glm::vec2(1, 1));
         }
     }
+
+
+    // Draw interface text
+    RenderTextMode();
+    glm::vec2 windowSize = glm::vec2(window->getFullWidth(), window->getFullHeight());
+    for (int i = 0; i < interfaces.size(); i++) {
+        if (interfaces[i] && interfaces[i]->getLabel()) {
+            UILabel* label = interfaces[i]->getLabel();
+
+            glm::vec2 pos = interfaces[i]->getComputedPosition();
+            glm::vec2 scale = interfaces[i]->getComputedScale();
+            pos.y = 1 - pos.y - scale.y;
+            pos *= windowSize;
+
+            RenderText(label->text, pos, 0.5f, label->color, Fonts::fonts[label->font]);
+        }
+    }
+    CleanseGLState();
 
     // Do not need to finish or flush GL thanks to buffer swap
     #ifdef DEBUG_VERBOSE
@@ -377,40 +403,32 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height, std::vector<UIF
     #endif
 }
 void Pipeline::EndFrame() {
-    /// glfwSwapBuffers(window->getGLWindow());
-
-    // glMatrixMode(GL_PROJECTION);
-    // glLoadIdentity();
-    // glOrtho(0, (double) window->getViewWidth(), 0, (double) window->getViewHeight(), 0, 10); // TODO: Make left side and right side of windowAspect centered
-    // glMatrixMode(GL_MODELVIEW);
-    // glLoadIdentity();
+    glfwSwapBuffers(window->getGLWindow());
 }
 
 
-void Pipeline::RenderText(ShaderGL* shader, std::string text, glm::vec2 pos, float scale, glm::vec3 color, Fonts::FFont* font) {
+void Pipeline::CleanseGLState() {
+    glUseProgram(0);
+    glBindVertexArray(0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+
+void Pipeline::RenderTextMode() {
     float width = window->getViewWidth();
     float height = window->getViewHeight();
     glOrtho(0, (double) window->getViewWidth(), 0, (double) window->getViewHeight(), -1, 10);
-
     glDisable(GL_DEPTH_TEST | GL_CULL_FACE | GL_ALPHA_TEST);
 
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glBegin(GL_QUADS);
-    glVertex2d(pos.x, pos.y);
-    glVertex2d(pos.x + scale, pos.y);
-    glVertex2d(pos.x + scale, pos.y + scale);
-    glVertex2d(pos.x, pos.y + scale);
-    glEnd();
-
-    // std::cout << window->getViewWidth() << ", " << window->getViewHeight() << "\n";
-    // std::cout << "Rendering text \"" << text << "\" at " << pos.x << ", " << pos.y << "\n";
-
-    glUseProgram(shader->getId());
+    fontShader->use();
     glm::mat4 projection = glm::ortho(0.0f, width, 0.0f, height);
-    glUniformMatrix4fv(glGetUniformLocation(shader->getId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-    glUniform3f(glGetUniformLocation(shader->getId(), "textColor"), color.x, color.y, color.z);
+    glUniformMatrix4fv(glGetUniformLocation(fontShader->getId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
     glActiveTexture(GL_TEXTURE0);
     glBindVertexArray(FontVertexArray);
+}
+void Pipeline::RenderText(std::string text, glm::vec2 pos, float scale, glm::vec3 color, Fonts::FFont* font) {
+    glUniform3f(glGetUniformLocation(fontShader->getId(), "textColor"), color.x, color.y, color.z);
 
     std::string::const_iterator c;
     for (c = text.begin(); c != text.end(); c++) {
@@ -443,7 +461,4 @@ void Pipeline::RenderText(ShaderGL* shader, std::string text, glm::vec2 pos, flo
         // now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         pos.x += (ch->advance >> 6) * scale; // bitshift by 6 to get value in pixels (2^6 = 64)
     }
-
-    glBindVertexArray(0);
-    glBindTexture(GL_TEXTURE_2D, 0);
 }

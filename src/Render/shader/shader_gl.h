@@ -21,6 +21,7 @@ class ShaderGL {
 
         bool attachKernel(std::string filepath, int flags = GL_FRAGMENT_SHADER);
         bool build();
+        void use();
 
     private:
         bool programBuilt = false;

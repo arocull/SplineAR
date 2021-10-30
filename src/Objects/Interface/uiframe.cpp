@@ -8,8 +8,14 @@ UIFrame::UIFrame() {
 
     color = glm::vec4(1, 1, 1, 1);
     parent = nullptr;
+    label = nullptr;
     lockAspect = false;
     zindex = 0;
+}
+UIFrame::~UIFrame() {
+    if (label) {
+        delete label;
+    }
 }
 
 // GETTERS / SETTERS //
@@ -35,6 +41,23 @@ bool UIFrame::isParentedBy(UIFrame* ancestor) {
         selected = selected->getParent();
     }
     return false;
+}
+
+
+// New Label - Adds/replaces label on this UI Frame with default label settings
+void UIFrame::newLabel() {
+    if (label) {
+        delete label;
+    }
+
+    label = new UILabel();
+    label->color = glm::vec3(0, 0, 0); // Use black as default color
+    label->font = 0; // Use default font
+    label->text = "Text Label";
+}
+// Get Label - Returns text label information of this UI Frame
+UILabel* UIFrame::getLabel() {
+    return label;
 }
 
 
@@ -108,7 +131,5 @@ void UIFrame::hoverMousedown() {
 }
 // The mouse has just released over the button, registering as a click
 void UIFrame::click(struct IEClick *event) {
-    #ifdef DEBUG
-        printf("Pressed a button!\n");
-    #endif
+    
 }
