@@ -68,11 +68,9 @@ int main(int argc, char **argv) {
     #endif
 
     // Initialize OpenCL
-    #ifndef DISABLE_GPU
     GPU gpu = GPU();
     Pipeline pipeline = Pipeline(&gpu, &window);
     pipeline.SetupContext();
-    #endif
 
 
     // Set up input sampler
@@ -172,10 +170,8 @@ int main(int argc, char **argv) {
 
 
         window.checkResizing();
-        #ifndef DISABLE_GPU
         pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw), ui->getInterfaces());
         pipeline.RenderText(shaderTest, "hi this is a test", glm::vec2(25.0f, 25.0f), 24.0f, glm::vec3(0, 0, 0), Fonts::fonts[0]);
-        #endif
         glfwSwapBuffers(window.getGLWindow());
     }
     printf("Loop ended. Closing program...\n");
@@ -192,10 +188,8 @@ int main(int argc, char **argv) {
     Fonts::Deallocate();
 
     // Free OpenCL
-    #ifndef DISABLE_GPU
     pipeline.Close();
     gpu.Close();
-    #endif
 
     printf("Deallocating input manager\n");
     InputManager::Deallocate();
