@@ -6,6 +6,7 @@
     #include <cstdio>
 #endif
 
+#include <vector>
 #include <glm/vec2.hpp>
 #include "src/Util/gl_headers.h"
 
@@ -16,6 +17,9 @@
 // Input Manager - Global namespace used for keeping track of inputs
 namespace InputManager {
     // STRUCTS / ENUMS //
+
+    // Keystrokes - A vector array of Keystroke*
+    //typedef std::vector<Keystroke*> Keystrokes;
 
     // (Enum) Input - Mouse State - Current state of mouse, use > 1 for pressed, < 2 for released
     enum MouseState {
@@ -43,7 +47,7 @@ namespace InputManager {
     void forceEndStroke();
 
     // KEYSTROKES //
-    extern Keystroke** keystrokes;
+    extern std::vector<Keystroke*> keystrokes;
     void appendKeystroke(Keystroke* keystroke);
     void handleKeystroke(int index);
     void callbackKeystroke(GLFWwindow* context, int key, int scancode, int action, int modifiers);

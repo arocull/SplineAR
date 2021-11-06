@@ -70,6 +70,39 @@ Stroke** Workspace::getStrokeArray(EWorkMode workMode) {
 }
 
 
+/* USER INPUT */
+
+// Workspace - Set Mode - Switches the workspace to the new work mode
+void Workspace::setMode(EWorkMode newWorkMode) {
+    mode = newWorkMode;
+}
+
+// Workspace - Apply Input - Applies a keystroke to the workspace, if possible. Returns false if nothing happened
+bool Workspace::applyInput(Keystroke* input) {
+    if (input->modifiers == 0 && !input->capsMode) {
+        bool modeChanged;
+        switch (input->key) {
+            case '1':
+                setMode(EWorkMode::EMDraw);
+                modeChanged = true;
+                break;
+            case '2':
+                setMode(EWorkMode::EMRig);
+                modeChanged = true;
+                break;
+            case '3':
+                setMode(EWorkMode::EMAnimate);
+                modeChanged = true;
+                break;
+            default:
+                modeChanged = false;
+        }
+        return modeChanged;
+    }
+    return false;
+}
+
+
 
 /* ANIMATION */
 

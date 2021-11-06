@@ -15,8 +15,8 @@ class PWindow {
     private:
         int width;
         int height;
-        float innerViewportWidth = 1.0f;//0.85f;//1.0f;//
-        float innerViewportHeight = 1.0f;//0.9f;
+        float innerViewportWidth = 1.0f;
+        float innerViewportHeight = 1.0f;
 
         int lastWidthResizing;
         int lastHeightResizing;

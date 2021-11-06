@@ -134,6 +134,19 @@ int main(int argc, char **argv) {
         InputManager::getMousePosition(&mouseX, &mouseY, &windowWidth, &windowHeight);
         int mouseState = InputManager::checkMouseState();
 
+        // Perform hotkeys
+        for (int i = 0; i < InputManager::keystrokes.size(); i++) {
+            Keystroke* key = InputManager::keystrokes[i]; // TODO: Where do we put this?
+            bool workspaceChanged = workspace->applyInput(key);
+            if (workspaceChanged) {
+                window.UpdateTitle(workspace->getName(), workspace->getMode());
+            }
+
+            // Handle input?
+            InputManager::handleKeystroke(i);
+            i--;
+        }
+
         // Interface
         UIFrame* uiButton = ui->checkButtons(mouseX, mouseY, windowWidth, windowHeight);
         if (uiButton) { // If we pressed a button

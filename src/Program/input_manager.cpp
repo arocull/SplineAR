@@ -3,22 +3,17 @@
 GLFWwindow* InputManager::context;
 Brush* InputManager::brush = nullptr;
 bool InputManager::mouseWasDown = false;
-Keystroke** InputManager::keystrokes = nullptr;
+std::vector<Keystroke*> InputManager::keystrokes = std::vector<Keystroke*>();
 bool InputManager::mouseWasDownUI = false;
 
 void InputManager::Initialize() {
-
-
-    keystrokes = (Keystroke**) malloc(KEYSTROKE_BUFFER_SIZE * sizeof(Keystroke*));
-    for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
-        keystrokes[i] = nullptr;
-    }
+    keystrokes.reserve(3);
 }
 void InputManager::Deallocate() {
-    for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
+    for (int i = 0; i < keystrokes.size(); i++) {
         handleKeystroke(i);
     }
-    free(keystrokes);
+    keystrokes.clear();
 }
 
 
@@ -44,9 +39,6 @@ Stroke* InputManager::tickInput() {
     glfwGetCursorPos(context, &mouseX, &mouseY);
     glfwGetWindowSize(context, &windowWidth, &windowHeight);
 
-    //mouseX /= windowWidth;
-    //mouseY /= windowHeight;
-    //mouseY = 1.0 - mouseY;
     mouseY = windowHeight - mouseY; // Invert mouse height
 
     if (glfwGetMouseButton(context, GLFW_MOUSE_BUTTON_LEFT) == GLFW_TRUE) {
@@ -88,16 +80,7 @@ void InputManager::appendKeystroke(Keystroke* keystroke) {
         DEBUG_Print_Keystroke(keystroke);
     #endif
 
-    for (int i = 0; i < KEYSTROKE_BUFFER_SIZE; i++) {
-        if (keystrokes[i] == nullptr) {
-            keystrokes[i] = keystroke;
-            return;
-        }
-    }
-    
-    // If there was no spot available for the input, handle the first one and replace it?
-    handleKeystroke(0);
-    keystrokes[0] = keystroke;
+    keystrokes.push_back(keystroke);
 }
 // Marks the given keystroke as handled, and frees it
 void InputManager::handleKeystroke(int index) {
@@ -107,8 +90,11 @@ void InputManager::handleKeystroke(int index) {
             DEBUG_Print_Keystroke(keystrokes[index]);
         #endif
 
-        delete keystrokes[index];
-        keystrokes[index] = nullptr;
+        delete keystrokes[index]; // Delete keystroke object at this position
+
+        auto iterator = keystrokes.begin(); // Get iterator to front of keystroke array
+        iterator += index; // Move forward X indices
+        keystrokes.erase(iterator); // Erase this item from the array
     }
 }
 // Callback function for GLFW's input function, adds the given item to the keystrokes array
@@ -118,10 +104,6 @@ void InputManager::callbackKeystroke(GLFWwindow* context, int key, int scancode,
     if (action == GLFW_REPEAT) return; // Don't record inputs for repeated keys
 
     Keystroke* state = new Keystroke();
-    // state->shift = glfwGetKey(context, GLFW_KEY_LEFT_SHIFT) || glfwGetKey(context, GLFW_KEY_RIGHT_SHIFT);
-    // state->control = glfwGetKey(context, GLFW_KEY_LEFT_CONTROL) || glfwGetKey(context, GLFW_KEY_RIGHT_CONTROL);
-    // state->alt = glfwGetKey(context, GLFW_KEY_LEFT_ALT) || glfwGetKey(context, GLFW_KEY_RIGHT_ALT);
-    // state->super = glfwGetKey(context, GLFW_KEY_HOME);
 
     state->shift = (modifiers & (1<<(GLFW_MOD_SHIFT))); // Check if shift bit is set to true
     state->control = (modifiers & (1<<(GLFW_MOD_CONTROL))); // Check if control bit is set to true
@@ -131,6 +113,7 @@ void InputManager::callbackKeystroke(GLFWwindow* context, int key, int scancode,
 
     state->key = key;
     state->scancode = scancode;
+    state->modifiers = state->shift + state->control + state->alt + state->super;
 
     InputManager::appendKeystroke(state);
 }

@@ -13,4 +13,5 @@ struct Keystroke {
     // Keys
     int key = 0;
     int scancode = 0;
+    int modifiers = 0; // Total number of modifiers applied
 };

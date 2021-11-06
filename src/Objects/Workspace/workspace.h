@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <string.h>
 
+#include "src/Objects/Input/keystroke.h"
 #include "src/Objects/Tools/brush.h"
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
@@ -46,6 +47,8 @@ class Workspace {
 
         Stroke** getStrokeArray(EWorkMode workModeToFetch = EWorkMode::EMDraw);
 
+        void setMode(EWorkMode newWorkMode);
+        bool applyInput(Keystroke* input);
 
         void tick(float DeltaTime);
         void playAnimation();
