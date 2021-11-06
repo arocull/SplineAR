@@ -1,11 +1,8 @@
 #pragma once
 
-#include "src/config.h"
-
 #include <cstdio>
 #include <string.h>
-#include <CL/cl.h>
-
+#include "src/Util/gl_headers.h"
 #include "src/Program/gpu.h"
 
 

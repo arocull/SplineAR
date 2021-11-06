@@ -6,9 +6,7 @@
     #include <cstdio>
 #endif
 
-#include <CL/cl.h>
-#include <CL/cl_gl.h>
-
+#include "src/Util/gl_headers.h"
 #include "src/Program/gpu.h"
 
 class GLTextureHandler {

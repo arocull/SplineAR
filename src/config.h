@@ -2,8 +2,6 @@
 
 
 /* Compiler Flags */
-#define CL_TARGET_OPENCL_VERSION 220
-
 #define PLATFORM_LINUX
 // #define PLATFORM_MINT // Enable if using Linux Mint (solves platform-specific GL issues)
 // #define PLATFORM_WINDOWS
