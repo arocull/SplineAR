@@ -5,8 +5,8 @@
 #include <glm/vec4.hpp>
 
 #include "src/config.h"
-#include "Objects/Input/click.h"
-#include "Objects/Interface/Information/uilabel.h"
+#include "src/Objects/Input/click.h"
+#include "src/Objects/Interface/Information/uilabel.h"
 
 // UI Frame - Base class for all UI elements
 class UIFrame {

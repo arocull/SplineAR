@@ -5,8 +5,8 @@
 #include <vector>
 
 #include <glm/vec2.hpp>
-#include "Util/gl_headers.h"
-#include "Util/vector.h"
+#include "src/Util/gl_headers.h"
+#include "src/Util/vector.h"
 
 #include "src/Program/input_manager.h"
 #include "src/Objects/Input/click.h"

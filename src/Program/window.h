@@ -1,7 +1,7 @@
 #pragma once
 
 #include "src/Objects/Enum/enums.h"
-#include <GLFW/glfw3.h>
+#include "src/Util/gl_headers.h"
 #include <string.h>
 
 // (Program) Window - Basic window for viewing and interaction

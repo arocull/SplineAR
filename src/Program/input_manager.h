@@ -7,7 +7,7 @@
 #endif
 
 #include <glm/vec2.hpp>
-#include "Util/gl_headers.h"
+#include "src/Util/gl_headers.h"
 
 #include "src/Objects/Tools/brush.h"
 #include "src/Objects/Input/keystroke.h"
