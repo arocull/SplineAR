@@ -21,11 +21,12 @@
 #include "src/Program/input_manager.h"
 #include "src/Program/fonts.h"
 #include "src/Program/ui_manager.h"
+#include "src/Objects/Workspace/workspace_interface.h"
 
-#include "src/Objects/Workspace/workspace.h"
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 #include "src/Objects/Tools/brush.h"
+#include "src/Objects/Workspace/workspace.h"
 #include "src/Objects/Interface/uiframe.h"
 
 #include "src/Render/shader/shader_gl.h"
@@ -81,8 +82,8 @@ int main(int argc, char **argv) {
     // threads.StartThreads();
 
     // Create a workspace
-    Workspace* workspace = new Workspace("NewWorkspace");
-    window.UpdateTitle(workspace->getName(), workspace->getMode());
+    WInterface::setActive(WInterface::buildWorkspace("Untitled"));
+    window.UpdateTitle(WInterface::getActive()->getName(), WInterface::getActive()->getMode());
 
     // Create UI manager
     UIManager* ui = new UIManager();
@@ -124,9 +125,9 @@ int main(int argc, char **argv) {
         frames++;
 
         // Set active drawing brush to the current brush the workspace is using
-        InputManager::setBrush(workspace->getBrush());
+        InputManager::setBrush(WInterface::getActive()->getBrush());
 
-        workspace->tick(DeltaTime);
+        WInterface::getActive()->tick(DeltaTime);
 
         // Get mouse info
         double mouseX, mouseY;
@@ -137,9 +138,9 @@ int main(int argc, char **argv) {
         // Perform hotkeys
         for (int i = 0; i < InputManager::keystrokes.size(); i++) {
             Keystroke* key = InputManager::keystrokes[i]; // TODO: Where do we put this?
-            bool workspaceChanged = workspace->applyInput(key);
+            bool workspaceChanged = WInterface::getActive()->applyInput(key);
             if (workspaceChanged) {
-                window.UpdateTitle(workspace->getName(), workspace->getMode());
+                window.UpdateTitle(WInterface::getActive()->getName(), WInterface::getActive()->getMode());
             }
 
             // Handle input?
@@ -165,7 +166,7 @@ int main(int argc, char **argv) {
         } else { // Otherwise, draw a stroke
             Stroke* newStroke = InputManager::tickInput(); // Tick stroke input, recieve new stroke if new one was created
             if (newStroke) { // If a stroke was created, go through all strokes and fill the next one with this one
-                bool placed = workspace->addStroke(newStroke);
+                bool placed = WInterface::getActive()->addStroke(newStroke);
                 if (!placed) { // If we are unable to place the stroke, forcibly end the stroke and delete it
                     InputManager::forceEndStroke();
                     delete newStroke;
@@ -175,13 +176,13 @@ int main(int argc, char **argv) {
 
 
         window.checkResizing();
-        pipeline.RunPipeline(DeltaTime, workspace->getStrokeArray(EWorkMode::EMDraw), ui->getInterfaces());
+        pipeline.RunPipeline(DeltaTime, WInterface::getActive()->getStrokeArray(EWorkMode::EMDraw), ui->getInterfaces());
     }
     printf("Loop ended. Closing program...\n");
 
     // Disable UI, close workspace, deallocate fonts
+    WInterface::close();
     delete ui;
-    delete workspace;
     Fonts::Deallocate();
 
     // Free OpenCL

@@ -5,7 +5,7 @@
 
 #include <cstdlib>
 #include <cstdio>
-#include <string.h>
+#include <string>
 
 #include "src/Objects/Input/keystroke.h"
 #include "src/Objects/Tools/brush.h"
@@ -16,11 +16,11 @@
 // - This is essentially a loaded-up project file
 class Workspace {
     public:
-        Workspace(const char* workspaceName);
+        Workspace(std::string workspaceName);
         ~Workspace();
 
     protected:
-        char* name;
+        std::string name;
         EWorkMode mode;
 
         float time = 0.0f;
@@ -37,7 +37,7 @@ class Workspace {
         Stroke** rigging;
 
     public:
-        char* getName();
+        std::string getName();
         EWorkMode getMode();
         float getTime();
 

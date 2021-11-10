@@ -1,7 +1,7 @@
 #include "src/Objects/Workspace/workspace.h"
 
-Workspace::Workspace(const char* workspaceName) {
-    name = strdup(workspaceName); // Allocate new string for workspace name
+Workspace::Workspace(std::string workspaceName) {
+    name = workspaceName; // Allocate new string for workspace name
     mode = EWorkMode::EMDraw;
 
     frameCurrent = frameStart;
@@ -19,8 +19,6 @@ Workspace::Workspace(const char* workspaceName) {
     }
 }
 Workspace::~Workspace() {
-    free(name); // Free workspace name
-
     // Free brushes
     for (int i = 0; i < NUM_WORK_MODES; i++) {
         if (brushes[i]) delete brushes[i];
@@ -40,7 +38,7 @@ Workspace::~Workspace() {
 /* GETTERS */
 
 // Workspace - Get Name - Returns the string name of this workspace
-char* Workspace::getName() {
+std::string Workspace::getName() {
     return name;
 }
 // Workspace - Get Mode - Returns the current edit mode this workspace is in

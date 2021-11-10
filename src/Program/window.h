@@ -2,7 +2,7 @@
 
 #include "src/Objects/Enum/enums.h"
 #include "src/Util/gl_headers.h"
-#include <string.h>
+#include <string>
 
 // (Program) Window - Basic window for viewing and interaction
 class PWindow {
@@ -29,7 +29,7 @@ class PWindow {
         void checkResizing();
         void resize();
         
-        void UpdateTitle(char* workspaceName, EWorkMode workMode);
+        void UpdateTitle(std::string workspaceName, EWorkMode workMode);
 
         // GETTERS //
         int getFullWidth();
