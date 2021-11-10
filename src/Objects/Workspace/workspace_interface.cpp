@@ -35,3 +35,22 @@ void WInterface::close() {
     }
     workspaces.clear();
 }
+
+
+// WORKSPACE INTERACTION
+
+void WInterface::updateWindowTitle(PWindow* window){
+    window->UpdateTitle(active->getName(), active->getMode(), active->hasChanged());
+}
+
+// Apply Input - Applies a keystroke to the workspace, if possible. Returns false if nothing happened
+void WInterface::applyInput(Keystroke* input) {
+    if (input->modifiers == 0 && !input->capsMode) {
+        int mode = input->key - '1'; // Make input key relative to workspace mode
+
+        // Make sure mode is a real mode
+        if (mode >= EWorkMode::EMDraw && mode < EWorkMode::EM_MAX) {
+            active->setMode((EWorkMode) mode); // Swap work mode
+        }
+    }
+}

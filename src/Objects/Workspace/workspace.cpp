@@ -45,6 +45,9 @@ std::string Workspace::getName() {
 EWorkMode Workspace::getMode() {
     return mode;
 }
+bool Workspace::hasChanged() {
+    return changed;
+}
 // Workspace - Get Brush - Returns the brush that is currently in use
 Brush* Workspace::getBrush() {
     return brushes[mode];
@@ -74,32 +77,6 @@ Stroke** Workspace::getStrokeArray(EWorkMode workMode) {
 void Workspace::setMode(EWorkMode newWorkMode) {
     mode = newWorkMode;
 }
-
-// Workspace - Apply Input - Applies a keystroke to the workspace, if possible. Returns false if nothing happened
-bool Workspace::applyInput(Keystroke* input) {
-    if (input->modifiers == 0 && !input->capsMode) {
-        bool modeChanged;
-        switch (input->key) {
-            case '1':
-                setMode(EWorkMode::EMDraw);
-                modeChanged = true;
-                break;
-            case '2':
-                setMode(EWorkMode::EMRig);
-                modeChanged = true;
-                break;
-            case '3':
-                setMode(EWorkMode::EMAnimate);
-                modeChanged = true;
-                break;
-            default:
-                modeChanged = false;
-        }
-        return modeChanged;
-    }
-    return false;
-}
-
 
 
 /* ANIMATION */
@@ -142,6 +119,7 @@ void Workspace::stopAnimation() {
 // Workspace - Add Stroke - Adds the given stroke to an array of strokes based off of the current work mode
 bool Workspace::addStroke(Stroke* newStroke) {
     bool placed = false; // If true, the stroke was placed into the right array
+    changed = true;
 
     Stroke** array = getStrokeArray(mode); // Array to add the stroke to (based off of mode)
 

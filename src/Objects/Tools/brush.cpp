@@ -23,9 +23,6 @@ Stroke* Brush::startStroke(double x, double y) {
     stroke->points[1]->pos.y = y;
     stroke->points[1]->thickness = thickness;
 
-
-    printf("Stroke has begun %i\n", inStroke());
-
     return stroke;
 }
 void Brush::endStroke() {

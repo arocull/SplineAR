@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
 
     // Create a workspace
     WInterface::setActive(WInterface::buildWorkspace("Untitled"));
-    window.UpdateTitle(WInterface::getActive()->getName(), WInterface::getActive()->getMode());
+    WInterface::updateWindowTitle(&window);
 
     // Create UI manager
     UIManager* ui = new UIManager();
@@ -138,10 +138,7 @@ int main(int argc, char **argv) {
         // Perform hotkeys
         for (int i = 0; i < InputManager::keystrokes.size(); i++) {
             Keystroke* key = InputManager::keystrokes[i]; // TODO: Where do we put this?
-            bool workspaceChanged = WInterface::getActive()->applyInput(key);
-            if (workspaceChanged) {
-                window.UpdateTitle(WInterface::getActive()->getName(), WInterface::getActive()->getMode());
-            }
+            WInterface::applyInput(key);
 
             // Handle input?
             InputManager::handleKeystroke(i);
@@ -177,6 +174,7 @@ int main(int argc, char **argv) {
 
         window.checkResizing();
         pipeline.RunPipeline(DeltaTime, WInterface::getActive()->getStrokeArray(EWorkMode::EMDraw), ui->getInterfaces());
+        WInterface::updateWindowTitle(&window);
     }
     printf("Loop ended. Closing program...\n");
 

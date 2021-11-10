@@ -29,7 +29,7 @@ class PWindow {
         void checkResizing();
         void resize();
         
-        void UpdateTitle(std::string workspaceName, EWorkMode workMode);
+        void UpdateTitle(std::string workspaceName, EWorkMode workMode, bool changed);
 
         // GETTERS //
         int getFullWidth();

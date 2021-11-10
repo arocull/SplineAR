@@ -7,7 +7,6 @@
 #include <cstdio>
 #include <string>
 
-#include "src/Objects/Input/keystroke.h"
 #include "src/Objects/Tools/brush.h"
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
@@ -23,6 +22,7 @@ class Workspace {
         std::string name;
         EWorkMode mode;
 
+        bool changed = false;
         float time = 0.0f;
         float timeScale = 1.0f;
         int frameStart = 0;
@@ -40,6 +40,7 @@ class Workspace {
         std::string getName();
         EWorkMode getMode();
         float getTime();
+        bool hasChanged();
 
         Brush* getBrush();
         Brush* getBrush(EWorkMode workModeToFetch);
@@ -48,7 +49,6 @@ class Workspace {
         Stroke** getStrokeArray(EWorkMode workModeToFetch = EWorkMode::EMDraw);
 
         void setMode(EWorkMode newWorkMode);
-        bool applyInput(Keystroke* input);
 
         void tick(float DeltaTime);
         void playAnimation();

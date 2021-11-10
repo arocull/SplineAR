@@ -50,8 +50,13 @@ void PWindow::resize() {
 }
 
 // PWindow - Update Title - Updates the title of the Program Window to use the workspace name + work mode
-void PWindow::UpdateTitle(std::string workspaceName, EWorkMode workMode) {
-    std::string title = "SplineAR - " + workspaceName + " - " + ENUM_WorkMode_GetName(workMode);
+void PWindow::UpdateTitle(std::string workspaceName, EWorkMode workMode, bool changed) {
+    std::string title = "SplineAR - " + workspaceName;
+    if (changed) {
+        title += "*";
+    }
+    title += " - " + ENUM_WorkMode_GetName(workMode);
+    
     glfwSetWindowTitle(glWindow, title.c_str());
 }
 
