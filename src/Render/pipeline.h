@@ -20,6 +20,7 @@
 #include "src/Objects/Art/point.h"
 #include "src/Objects/Art/stroke.h"
 #include "src/Objects/Interface/uiframe.h"
+#include "src/Objects/Interface/ui_manager.h"
 
 class Pipeline {
     public:

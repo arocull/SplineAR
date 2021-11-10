@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "src/Program/ui_manager.h"
+#include "src/Objects/Interface/ui_manager.h"
 #include "src/Objects/Workspace/workspace.h"
 #include "src/Objects/Input/keystroke.h"
 #include "src/Program/window.h"
@@ -22,5 +22,6 @@ namespace WInterface {
 
     // WORKSPACE INTERFACING //
     void updateWindowTitle(PWindow* window);
+    void workspaceToolUI(EWorkMode mode);
     void applyInput(Keystroke* input);
 }

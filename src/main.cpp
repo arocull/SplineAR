@@ -20,7 +20,7 @@
 #include "src/Program/thread_manager.h"
 #include "src/Program/input_manager.h"
 #include "src/Program/fonts.h"
-#include "src/Program/ui_manager.h"
+#include "src/Objects/Interface/ui_manager.h"
 #include "src/Objects/Workspace/workspace_interface.h"
 
 #include "src/Objects/Art/point.h"
@@ -81,27 +81,13 @@ int main(int argc, char **argv) {
     // ThreadManager threads = ThreadManager(window.glWindow);
     // threads.StartThreads();
 
+    // Initialize UI Manager
+    UIManager::init();
+
     // Create a workspace
     WInterface::setActive(WInterface::buildWorkspace("Untitled"));
     WInterface::updateWindowTitle(&window);
-
-    // Create UI manager
-    UIManager* ui = new UIManager();
-
-    UIFrame* basicInterface1 = new UIFrame();
-    basicInterface1->setPositionScale(glm::vec2(0.0, 0.0), glm::vec2(0.1, 0.05));
-    basicInterface1->interactable = true;
-    basicInterface1->newLabel();
-    basicInterface1->getLabel()->text = "Button 1";
-    ui->addInterface(basicInterface1);
-
-    UIFrame* basicInterface2 = new UIFrame();
-    basicInterface2->setPositionScale(glm::vec2(0.1, 0.0), glm::vec2(0.1, 0.05));
-    basicInterface2->setColor(glm::vec4(0.9, 0.9, 0.9, 1));
-    basicInterface2->interactable = true;
-    basicInterface2->newLabel();
-    basicInterface2->getLabel()->text = "Button 2";
-    ui->addInterface(basicInterface2);
+    WInterface::workspaceToolUI(WInterface::getActive()->getMode());
 
     // Set up clock for delta time fetching
     timespec lastTime;
@@ -146,11 +132,11 @@ int main(int argc, char **argv) {
         }
 
         // Interface
-        UIFrame* uiButton = ui->checkButtons(mouseX, mouseY, windowWidth, windowHeight);
+        UIFrame* uiButton = UIManager::checkButtons(mouseX, mouseY, windowWidth, windowHeight);
         if (uiButton) { // If we pressed a button
             switch (mouseState) { // Interact with button based off mouse state
                 case InputManager::MouseState::EI_MS_JustReleased:
-                    ui->clickButton(uiButton, new IEClick());
+                    UIManager::clickButton(uiButton, new IEClick());
                     break;
                 case InputManager::MouseState::EI_MS_JustPressed:
                 case InputManager::MouseState::EI_MS_Pressed:
@@ -173,14 +159,14 @@ int main(int argc, char **argv) {
 
 
         window.checkResizing();
-        pipeline.RunPipeline(DeltaTime, WInterface::getActive()->getStrokeArray(EWorkMode::EMDraw), ui->getInterfaces());
+        pipeline.RunPipeline(DeltaTime, WInterface::getActive()->getStrokeArray(EWorkMode::EMDraw), UIManager::getInterfaces());
         WInterface::updateWindowTitle(&window);
     }
     printf("Loop ended. Closing program...\n");
 
-    // Disable UI, close workspace, deallocate fonts
+    // Close workspace, close UI, deallocate fonts
     WInterface::close();
-    delete ui;
+    UIManager::close();
     Fonts::Deallocate();
 
     // Free OpenCL

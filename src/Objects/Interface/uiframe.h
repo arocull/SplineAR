@@ -3,6 +3,7 @@
 #include "src/Util/gl_headers.h"
 #include <glm/vec2.hpp>
 #include <glm/vec4.hpp>
+#include <iostream>
 
 #include "src/config.h"
 #include "src/Objects/Input/click.h"

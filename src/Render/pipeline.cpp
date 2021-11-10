@@ -373,26 +373,32 @@ void Pipeline::MidFrame(Stroke** strokes, int width, int height, std::vector<UIF
 
 
     // Draw interface backgrounds
-    for (int i = 0; i < interfaces.size(); i++) {
-        if (interfaces[i]) {
-            interfaces[i]->draw(glm::vec2(1, 1));
+    for (int j = UIManager::layers.size() - 1; j >= 0; j--) {
+        UILayer* layer = UIManager::layers[j];
+        for (int i = 0; i < layer->numFrames(); i++) {
+            if (layer->getFrame(i)) {
+                layer->getFrame(i)->draw(glm::vec2(1, 1));
+            }
         }
     }
-
 
     // Draw interface text
     RenderTextMode();
     glm::vec2 windowSize = glm::vec2(window->getFullWidth(), window->getFullHeight());
-    for (int i = 0; i < interfaces.size(); i++) {
-        if (interfaces[i] && interfaces[i]->getLabel()) {
-            UILabel* label = interfaces[i]->getLabel();
+    for (int j = UIManager::layers.size() - 1; j >= 0; j--) {
+        UILayer* layer = UIManager::layers[j];
+        for (int i = 0; i < layer->numFrames(); i++) {
+            UIFrame* frame = layer->getFrame(i);
+            if (frame && frame->getLabel()) {
+                UILabel* label = frame->getLabel();
 
-            glm::vec2 pos = interfaces[i]->getComputedPosition();
-            glm::vec2 scale = interfaces[i]->getComputedScale();
-            pos.y = 1 - pos.y - scale.y;
-            pos *= windowSize;
+                glm::vec2 pos = frame->getComputedPosition();
+                glm::vec2 scale = frame->getComputedScale();
+                pos.y = 1 - pos.y - scale.y;
+                pos *= windowSize;
 
-            RenderText(label->text, pos, 0.5f, label->color, Fonts::fonts[label->font]);
+                RenderText(label->text, pos, 0.5f, label->color, Fonts::fonts[label->font]);
+            }
         }
     }
     CleanseGLState();

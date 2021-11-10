@@ -131,5 +131,7 @@ void UIFrame::hoverMousedown() {
 }
 // The mouse has just released over the button, registering as a click
 void UIFrame::click(struct IEClick *event) {
-    
+    if (label) {
+        std::cout << "\tLabeled Button pressed " << label->text << std::endl;
+    }
 }
